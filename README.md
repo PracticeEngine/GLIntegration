@@ -2,9 +2,9 @@
 
 General Ledger Integration with Practice Engine
 
-# Overview
+## Overview
 
-The GL Integration works by providing a set of Nominal Ledger tables that map our single-entry accounting system into a double-entry system.  Once the double entry values are created, the system (this project) has a GL Provider that is mapped to a GL System, where it queries for Account Types and Accounts which create a set of mappings.  
+The GL Integration works by providing a set of Nominal Ledger tables that map our single-entry accounting system into a double-entry system.  Once the double entry values are created, the system (this project) has a GL Provider that is mapped to a GL System, where it queries for Account Types and Accounts which create a set of mappings.
 
 After the mappings are created, a Journal is created in the Nominal Ledger tables.  That Journal is then available to be posted to the provider.
 
