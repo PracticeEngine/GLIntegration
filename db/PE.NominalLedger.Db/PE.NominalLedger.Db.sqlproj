@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>PE.NominalLedger.Db</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{3b7d1b0a-aeb9-40ee-99ae-fc0ba7b719c2}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>PE.NominalLedger.Db</RootNamespace>
+    <AssemblyName>PE.NominalLedger.Db</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <SccProjectName>
+    </SccProjectName>
+    <SccProvider>
+    </SccProvider>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="Stored Procedures\" />
+    <Folder Include="PostDeploy" />
+    <Folder Include="Tables" />
+    <Folder Include="Stored Procedures\Intacct" />
+    <Folder Include="Stored Procedures\Menu" />
+    <Folder Include="Stored Procedures\Nominal" />
+    <Folder Include="Stored Procedures\SQLProviders" />
+    <Folder Include="Stored Procedures\SQLProviders\AccessDynamics" />
+    <Folder Include="Stored Procedures\SQLProviders\GreatPlains" />
+    <Folder Include="Stored Procedures\SQLProviders\SunSystems" />
+    <Folder Include="Stored Procedures\PostCreation" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="PostDeploy\_PostDeploy.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PostDeploy\Pages.sql" />
+    <None Include="PostDeploy\TaskPads.sql" />
+    <None Include="Engine_Master_96_Instance.publish.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Stored Procedures\pe_NL_Journal_List.sql" />
+    <Build Include="Stored Procedures\pe_NL_Journal_Reprint.sql" />
+    <Build Include="Stored Procedures\pe_NL_Journal_Reprint_Details.sql" />
+    <Build Include="Stored Procedures\pe_NL_Journal_Reprint_VAT.sql" />
+    <Build Include="Stored Procedures\pe_NL_Lodge_Update.sql" />
+    <Build Include="Stored Procedures\pe_NL_Map_Count.sql" />
+    <Build Include="Stored Procedures\pe_NL_Map_Details.sql" />
+    <Build Include="Stored Procedures\pe_NL_Map_Line_Add.sql" />
+    <Build Include="Stored Procedures\pe_NL_Map_Line_Find.sql" />
+    <Build Include="Stored Procedures\pe_NL_Org_Details.sql" />
+    <Build Include="Stored Procedures\pe_NL_Paged_Map_Details.sql" />
+    <Build Include="Stored Procedures\pe_NL_rpt_Journal.sql" />
+    <Build Include="Stored Procedures\pe_NL_rpt_Journal_VAT.sql" />
+    <Build Include="Stored Procedures\pe_NL_Select_Dates.sql" />
+    <None Include="Tables\SunSystems_Accounts.sql" />
+    <Build Include="Stored Procedures\Intacct\pe_NL_Intacct_Customer.sql" />
+    <Build Include="Stored Procedures\Intacct\pe_NL_Intacct_Employee.sql" />
+    <Build Include="Stored Procedures\Intacct\pe_NL_Intacct_Project.sql" />
+    <Build Include="Stored Procedures\Menu\pe_NL_Menu_List.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Account_Types.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Account_Types_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Account_Types_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\SunSystems\pe_NL_Account_Types_SS.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Accounts_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Accounts_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\SunSystems\pe_NL_Accounts_SS.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Cashbook_Post_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Cashbook_Post_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Accounts.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_DisbMap_Create.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_DisbMap_Create_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_DisbMap_Create_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_DisbMap_Details.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_DisbMap_Details_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_DisbMap_Details_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_DisbMap_Line.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_DisbMap_Line_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Disbs.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Disbs_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Disbs_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Journal_Post.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Journal_Post_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Journal_Post_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_GP_Accs.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_GP_Types.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Journal_Post_GP_CB.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Journal_Reprint_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Journal_Reprint_VAT_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_Map_Line_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_rpt_Journal_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\GreatPlains\pe_NL_rpt_Journal_VAT_GP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Journal_Reprint_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Journal_Reprint_VAT_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Map_Line_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_rpt_Journal_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_rpt_Journal_VAT_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\SunSystems\pe_NL_Journal_Reprint_SS.sql" />
+    <Build Include="Stored Procedures\SQLProviders\SunSystems\pe_NL_Map_Line_SS.sql" />
+    <Build Include="Stored Procedures\SQLProviders\SunSystems\pe_NL_rpt_Journal_SS.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Cashbook_Post.sql" />
+    <Build Include="Stored Procedures\pe_NL_Cashbook_Entries.sql" />
+    <Build Include="Stored Procedures\pe_NL_Costing_Update.sql" />
+    <Build Include="Stored Procedures\pe_NL_Detail_Groups.sql" />
+    <Build Include="Stored Procedures\pe_NL_Detail_Lines.sql" />
+    <Build Include="Stored Procedures\pe_NL_Detail_Report.sql" />
+    <Build Include="Stored Procedures\pe_NL_DisbMap_Line_Update.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Map_Create.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Map_Clear.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_DisbMap_Clear.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Control_Details.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Control_Update.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Control_Disbs.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Num_Entries.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Opening.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Post_Periods.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Missing_Map.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Map_Line.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Map_Line_Update.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Mapping_List.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Groups.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Lines.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Export.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Transfer_Failed.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Transfer_Worked.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_RePost_List.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Org_List.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Org_Update.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Cashbook_Extract.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Cashbook_Worked.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Periods.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Cashbook_List.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Journal_Transfer.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_AccNums.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_DRS.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_DRS_Fees.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_DRS_Other.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_EXP.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_Int.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_LOD.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_WIP.sql" />
+    <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_WIP_Other.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">
+      <HintPath>..\PracticeEngine.Database.Tables.dacpac</HintPath>
+      <SuppressMissingDependenciesErrors>True</SuppressMissingDependenciesErrors>
+    </ArtifactReference>
+  </ItemGroup>
+</Project>

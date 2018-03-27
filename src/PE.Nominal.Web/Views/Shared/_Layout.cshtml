@@ -1,0 +1,73 @@
+﻿@model PE.Nominal.ViewModels.SPAViewModel
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Practice Engine - G/L Integration</title>
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="~/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/select.bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="navbar-brand">G/L Integration</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            @foreach (var taskPad in Model.TaskPads)
+                            {
+                                <li><a data-bind="click:showPage.bind($data,'@taskPad.VM')">@taskPad.MenuName</a></li>
+                            }
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="~/hangfire" target="_blank">Hangfire Dashboard</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Today.Year - Practice Engine</p>
+        </footer>
+    </div>
+    <script src="~/js/jquery.min.js"></script>
+    <script src="~/js/jquery.blockUI.js"></script>
+    <script src="~/js/moment-with-locales.min.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="~/js/knockout.js"></script>
+    <script src="~/js/knockout-postbox.min.js"></script>
+    <script src="~/js/jquery.dataTables.min.js"></script>
+    <script src="~/js/dataTables.bootstrap.min.js"></script>
+    <script src="~/js/dataTables.select.min.js"></script>
+    <script src="~/js/es6-promise.auto.min.js"></script>
+    <script>
+        sessionStorage.setItem("rootURL", "@Html.Raw(Url.Content("~/"))");
+    </script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script type="text/javascript">
+        sessionStorage.setItem("SelectedDates", '@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Dates))');
+        sessionStorage.setItem("MenuItems", '@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TaskPads))');
+    </script>
+</body>
+</html>

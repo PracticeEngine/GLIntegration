@@ -1,0 +1,7 @@
+﻿CREATE PROCEDURE [dbo].[pe_NL_GP_Types]
+
+AS
+
+SELECT *
+FROM pe_view_NL_Types
+ORDER BY ACCATDSC

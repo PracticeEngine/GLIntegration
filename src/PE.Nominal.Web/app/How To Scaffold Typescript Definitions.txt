@@ -1,0 +1,26 @@
+﻿Note: This uses the custom PE.TSReflector tool to automate generation of typescript definitions from C# Classes.
+If you don't have access to the custom PE Tools Nuget Repository, this will not work.
+
+
+1. Build the Web Project Successfully
+2. Open a Console Window to the CM.Nominal.Web Directory
+3. run these commands:
+
+At Package Manager: Install-Package pe.tsreflector (this will update the version)
+
+	dotnet restore (this should restore the DotNetCliToolReference)
+	dotnet tsreflect -o app\tsreflect.d.ts -a PE.GLDtos.dll
+
+
+
+Other helpful:
+
+Run: dotnet tsreflect --version to check the version in use
+
+Run: dotnet tsreflect --help for full options / instructions
+
+
+
+To Update the Version of TsReflect edit the .csproj, and update this line:
+
+	<DotNetCliToolReference Include="pe.tsreflector" Version="1.0.9511" />

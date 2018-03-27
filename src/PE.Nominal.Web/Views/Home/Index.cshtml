@@ -1,0 +1,675 @@
+﻿@model PE.Nominal.ViewModels.SPAViewModel
+<!-- ko component:bodyVM -->
+<!-- /ko -->
+
+<template id="body-Home">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Common G/L Integration Actions
+                </div>
+                <div class="panel-body">
+                    <div class="list-group">
+                        <a href="#" data-bind="visible:extract,click:showPage.bind($data,'IntegrationExtract')" class="list-group-item">Integration Extract</a>
+                        <a href="#" data-bind="visible:journal,click:showPage.bind($data,'PostCreate')" class="list-group-item">Create Journal</a>
+                        <a href="#" data-bind="visible:mapping,click:showPage.bind($data,'MissingMap')" class="list-group-item">Missing Mappings</a>
+                        <a href="#" data-bind="visible:posting,click:showPage.bind($data,'Journal')" class="list-group-item">Journal Posting</a>
+                        <a href="#" data-bind="visible:bankrec,click:showPage.bind($data,'BankRec')" class="list-group-item">Update Bank Rec</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-IntegrationExtract">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Integration Extract
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>The extract will take a copy of any new WIP, Debtors, Cash or Expense transactions posted since the last extract.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run">Run</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-PostCreate">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Create Journal
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                    </form>
+                    <p>This routine will summarise the nominal transactions and create the posting journal.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run,enable:SelectedPeriod">Create Journal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="nested-Map-Editor">
+    <div class="modal fade" tabindex="-1" role="dialog" data-bind="bsmodal:editor">
+        <div class="modal-dialog" role="document" data-bind="if:editor">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Mapping</h4>
+                </div>
+                <div class="modal-body" data-bind="with:editor">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Organisation</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.OrgName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Source</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.NomSource"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Section</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.NomSection"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Account</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.NomAccount"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Office</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.OfficeName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Service</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.ServiceName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Partner</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.PartnerName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Department</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.DepartmentName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Target Type</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:acctTypes,value:selectedType,optionsValue:'AccountTypeCode',optionsText:'AccountTypeDesc',optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Target Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:accounts,optionsText:'AccountDesc',optionsValue:'AccountCode',value:selectedAccount,optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" data-bind="with:editor">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bind="click:saveMapping">Save Mapping</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</template>
+<template id="body-MissingMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Missing Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-Map-Editor'-->
+    <!-- /ko -->
+</template>
+<template id="body-Journal-Node">
+    <li class="text-nowrap clickable" data-bind="css:{'bg-primary':$component.selectedItem() == $data},click:$component.selectedItem">
+        <span style="font-family:monospace;" data-bind="html:htmlSpace"></span>
+        <!-- ko if: children.length -->
+        <i class="fa fa-plus-square-o" data-bind="visible:!expanded(),click:expanded.bind($data, true), clickBubble:false"></i>
+        <i class="fa fa-minus-square-o" data-bind="visible:expanded,click:expanded.bind($data, false), clickBubble:false"></i>
+        <!-- /ko -->
+        <!-- ko ifnot: children.length -->
+        <i class="fa fa-fw"></i>
+        <!-- /ko -->
+        <span data-bind="text:title"></span>
+    </li>
+    <!-- ko if: children.length && expanded() -->
+    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
+    <!-- /ko -->
+</template>
+<template id="body-Journal">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Journal Posting
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
+                                <div>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}">
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-info" data-bind="click:report">Report</button>
+                    @if (Model.SQLIntegration)
+                    {
+                    <a class="btn btn-default" href="~/api/Actions/Journal.csv" target="_blank" download="Journal.csv">Export</a>
+                    <button class="btn btn-default" data-bind="click:flagTransfer">Flag as Transferred</button>
+                    }
+                    <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
+                    @if (Model.IntacctHrsJournal)
+                    {
+                        <button class="btn btn-primary" data-bind="click:statHours">Send Statistics (Hrs)</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-Map-Editor'-->
+    <!-- /ko -->
+</template>
+<template id="body-RepostJournal">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Repost Journal
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to repost.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-BankRec">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Update Bank Reconciliation
+                </div>
+                <div class="panel-body">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>The update will transfer all complete Lodgement Batches entered since the last update.</p>               
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run">Update Bank Rec</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-BankRecPost">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Repost Journal
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to repost.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="body-NLImport">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Create Disbursements
+                </div>
+                <div class="panel-body">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>This routine will import the Creditor purchases into a disbursement batch within Practice Engine.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run">Create Disbursement Batch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-Organisations">
+    <div class="row">
+        <div class="col-md-offset-2 col-md-8">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Organisations
+                </div>
+                <div class="panel-body">
+                    <p>Use this to configure which organizations to integrate.  For SQL-to-SQL integrations, provide the Server and Database.  For Intacct and other integrations, these must be setup in the application configuration as they may contain passwords or other sensitive details.</p>
+                    <em>All Integrations are controlled with the Transfer Checkbox.</em>
+                    <table class="table table-condensed table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Server</th>
+                                <th>Database</th>
+                                <th>Transfer</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach:orgs">
+                            <tr>
+                                <!-- ko ifnot: $data == $parent.editOrg() -->
+                                <td data-bind="text:PracName"></td>
+                                <td data-bind="text:NLServer"></td>
+                                <td data-bind="text:NLDatabase"></td>
+                                <td>
+                                    <i class="fa fa-check" data-bind="visible:NLTransfer"></i>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-default" data-bind="click:$parent.editOrg.bind($parent, $data)">Edit</button>
+                                </td>
+                                <!-- /ko -->
+                                <!-- ko if: $data == $parent.editOrg() -->
+                                <td data-bind="text:PracName"></td>
+                                <td> <input type="text" class="form-control input-sm" data-bind="value:$parent.server" /></td>
+                                <td> <input type="text" class="form-control input-sm" data-bind="value:$parent.database" /></td>
+                                <td>
+                                    <input type="checkbox" data-bind="checked:$parent.transfer" />
+                                </td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-xs btn-primary" data-bind="click:$parent.updateOrg.bind($parent)">Save</button>
+                                    <button type="button" class="btn btn-xs btn-default" data-bind="click:$parent.editOrg.bind($parent, null)">Cancel</button>
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-NominalControl">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Integration Setup (@Model.ProviderType)
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Breakdown WIP by</label>
+                            <div class="col-md-8">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:wipOffice" /> Office
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:wipService" /> Service
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:wipPartner" /> Partner
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:wipDepartment" /> Department
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Breakdown DRS (A/R) by</label>
+                            <div class="col-md-8">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:drsOffice" /> Office
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:drsService" /> Service
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:drsPartner" /> Partner
+                                </label>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" data-bind="checked:drsDepartment" /> Department
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">WIP Detail Level</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:wipLevel">
+                                    <option value="0">Summary</option>
+                                    <option value="1">Detail</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">DRS (A/R) Detail Level</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:drsLevel">
+                                    <option value="0">Summary</option>
+                                    <option value="1">Detail</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Disbursement Detail Level</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:disbDetail">
+                                    <option value="0">All to 1 Code</option>
+                                    <option value="1">Split by nominal code</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Standard Disbursement Code</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:stdDisbCode,options:disbCodes, optionsText:'ChargeName',optionsValue:'ChargeCode', optionsCaption:'Choose...'">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Fee (Bill) Source</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:feeSource">
+                                    <option value="DRS">DRS (A/R)</option>
+                                    <option value="WIP">WIP</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">Show Fee Profits</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:feeProfits">
+                                    <option value="0">Yes (separate entry)</option>
+                                    <option value="1">No (single entry)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">WIP Fees by Fee Partner</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:feePartner">
+                                    <option value="0">Yes</option>
+                                    <option value="1">No</option>
+                                </select>
+                            </div>
+                        </div>
+                        @if (Model.SQLIntegration)
+                        {
+                        <div class="form-group form-group-sm">
+                            <label class="control-label col-md-4">SQL GL Type Is</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:glSystem">
+                                    <option value="AD">Access Dimensions (SQL)</option>
+                                    <option value="GP">Great Plains Dynamics (SQL)</option>
+                                    <option value="SS">SunSystems (CSV)</option>
+                                </select>
+                            </div>
+                        </div>
+                        }
+                        <div class="form-group form-group-sm">
+                            <div class="col-md-offset-4 col-md-8">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" data-bind="checked:interCompany" />
+                                        Inter-Company Entries
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <div class="col-md-offset-4 col-md-8">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" data-bind="checked:cashbook" />
+                                        Use Cashbook Integration
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <div class="col-md-offset-4 col-md-8">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" data-bind="checked:expenses" />
+                                        Integrate Expenses
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:buildMap">Build Map</button>
+                    <button class="btn btn-default" data-bind="click:clearMap">Clear Map</button>
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-IntacctSync">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Intacct Sync (STATS JOURNAL)
+                </div>
+                    @if (Model.SQLIntegration)
+                    {
+                        <div class="panel-body">
+                            <div class="alert alert-warning">This is not available with a SQL Integraion</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-xs-12 text-right">
+                                    <form class="form-inline">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" data-bind="checked:onlyNew"> Sync Only New Items (no update)
+                                            </label>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runEmployeeSync">Start Employees</button>
+                                Synchronize Employees (from PE Staff)
+                            </div>
+                            <div class="list-group-item">
+                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runCustomerSync">Start Customers</button>
+                                Synchronize Customers (from PE Clients)
+                            </div>
+                            <div class="list-group-item">
+                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runProjectSync">Start Projects</button>
+                                Synchronize Projects (from PE Jobs)
+                            </div>
+                            <div class="list-group-item">
+                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runSyncAll">Start All</button>
+                                Synchronize All (Staff -> Jobs -> Clients)
+                            </div>
+                        </div>
+                    }
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <a href="~/hangfire" target="_blank" class="btn btn-info">Hangfire Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-NLMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Export Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-Map-Editor'-->
+    <!-- /ko -->
+</template>

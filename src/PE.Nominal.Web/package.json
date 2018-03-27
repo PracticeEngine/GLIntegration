@@ -1,0 +1,22 @@
+{
+  "name": "pe.nominal.web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bootstrap": "^3.3.38",
+    "@types/datatables.net": "^1.10.8",
+    "@types/datatables.net-select": "^1.2.3",
+    "@types/jquery": "^3.3.0",
+    "@types/jquery.blockui": "0.0.28",
+    "@types/knockout": "^3.4.51",
+    "@types/knockout.postbox": "0.0.29",
+    "@types/moment": "^2.13.0"
+  }
+}
