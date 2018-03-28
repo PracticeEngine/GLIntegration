@@ -2,6 +2,8 @@
 
 General Ledger Integration with Practice Engine
 
+[![Build Status](https://praceng.visualstudio.com/_apis/public/build/definitions/5ab340ff-723c-45a6-bf17-a12ca818093a/91/badge)](https://praceng.visualstudio.com/Nominal%20Ledger/_build/index?definitionId=91)
+
 ## Overview
 
 The GL Integration works by providing a set of Nominal Ledger tables that map our single-entry accounting system into a double-entry system.  Once the double entry values are created, the system (this project) has a GL Provider that is mapped to a GL System, where it queries for Account Types and Accounts which create a set of mappings.
