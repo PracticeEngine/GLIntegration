@@ -15,6 +15,7 @@ namespace PE.Nominal.Intacct
     {
         private readonly IHostingEnvironment _env;
         protected readonly IntacctConfig _config;
+
         public IntacctBaseService(IntacctConfig config, IHostingEnvironment env)
         {
             _config = config;
@@ -69,7 +70,8 @@ namespace PE.Nominal.Intacct
                 SenderPassword = orgConfig.SenderPassword,
                 CompanyId = orgConfig.CompanyID,
                 UserId = orgConfig.UserID,
-                UserPassword = orgConfig.UserPassword
+                UserPassword = orgConfig.UserPassword,
+                Logger = NLog.LogManager.GetLogger("Intacct")
             });
 
             return intacctClient;
