@@ -21,8 +21,9 @@ namespace PE.Nominal.Web
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                .ConfigureLogging(logging =>
+                .ConfigureLogging((hostingContext,logging) =>
                 {
+                    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                     logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
