@@ -14,12 +14,19 @@ namespace PE.Nominal.Web
     {
         public static void Main(string[] args)
         {
+            NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
             BuildWebHost(args).Run();
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
+                .ConfigureLogging((hostingContext,logging) =>
+                {
+                    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    logging.ClearProviders();
+                    logging.SetMinimumLevel(LogLevel.Trace);
+                })
                 .Build();
     }
 }

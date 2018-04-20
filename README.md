@@ -2,6 +2,8 @@
 
 General Ledger Integration with Practice Engine
 
+[![Build Status](https://praceng.visualstudio.com/_apis/public/build/definitions/5ab340ff-723c-45a6-bf17-a12ca818093a/91/badge)](https://praceng.visualstudio.com/Nominal%20Ledger/_build/index?definitionId=91)
+
 ## Overview
 
 The GL Integration works by providing a set of Nominal Ledger tables that map our single-entry accounting system into a double-entry system.  Once the double entry values are created, the system (this project) has a GL Provider that is mapped to a GL System, where it queries for Account Types and Accounts which create a set of mappings.
@@ -21,3 +23,9 @@ The Sql Provider expects that the system is run on a Sql Server that holds both 
 ## Other Aspects
 
 There are several other aspects which have been added for various clients, etc.  These include 'Statistic Journals' and 'Expense Journals' that will transfer Staff Hours and Staff Expenses to the GL system.
+
+### Logging
+
+Basic logging is enabled through ASP.NET appsettings.json values per Microsoft's [Logging Documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1&tabs=aspnetcore2x#log-filtering).  Standard logging is all sent to the Server's EventLog / EventViewer.
+
+Intacct logging is available by configuring the [NLog.config](https://github.com/nlog/nlog/wiki/Configuration-file) file (set the intacctfile path to a writable location).
