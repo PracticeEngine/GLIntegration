@@ -14,7 +14,7 @@ namespace PE.Nominal
         /// <returns></returns>
         public static DateTime ToIntacctDate(this DateTime? date)
         {
-            return date.HasValue ? date.Value : DateTime.MinValue;
+            return date.HasValue ? date.Value : DateTime.MinValue; 
         }
     }
 }
