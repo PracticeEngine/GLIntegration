@@ -284,7 +284,7 @@ namespace PE.Nominal.Intacct
                             LocationId = employee.LOCATIONID,
                             Active = employee.EMPLOYEEACTIVE == "active",
                             StartDate = employee.EMPLOYEESTART,
-                            EndDate = employee.EMPLOYEETERMINATION
+                            EndDate = employee.EMPLOYEETERMINATION.ToIntacctDate()
                         };
                         if (!String.IsNullOrWhiteSpace(employee.PE_STAFF_CODE))
                         {
@@ -304,7 +304,7 @@ namespace PE.Nominal.Intacct
                             LocationId = employee.LOCATIONID,
                             Active = employee.EMPLOYEEACTIVE == "active",
                             StartDate = employee.EMPLOYEESTART,
-                            EndDate = employee.EMPLOYEETERMINATION
+                            EndDate = employee.EMPLOYEETERMINATION.ToIntacctDate()
                         };
                         if (!String.IsNullOrWhiteSpace(employee.PE_STAFF_CODE))
                         {
