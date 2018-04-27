@@ -29,3 +29,5 @@ There are several other aspects which have been added for various clients, etc. 
 Basic logging is enabled through ASP.NET appsettings.json values per Microsoft's [Logging Documentation](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1&tabs=aspnetcore2x#log-filtering).  Standard logging is all sent to the Server's EventLog / EventViewer.
 
 Intacct logging is available by configuring the [NLog.config](https://github.com/nlog/nlog/wiki/Configuration-file) file (set the intacctfile path to a writable location).
+
+Please note that in order to get the full XML requests logged, you must change the LogLevel from "Warn" to "Debug" in the NLog.config file provided.
