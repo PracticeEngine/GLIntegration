@@ -14,6 +14,9 @@ namespace PE.Nominal.Web
     {
         public static void Main(string[] args)
         {
+            //Enable Tls 1.2 (not included by default)
+            System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+
             NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
             BuildWebHost(args).Run();
         }
