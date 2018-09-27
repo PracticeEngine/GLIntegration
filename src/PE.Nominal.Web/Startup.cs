@@ -55,7 +55,8 @@ namespace PE.Nominal.Web
                     opt.SerializerSettings.DateFormatString = "yyyy-MM-dd";
                 });
             services.AddDbContext<DbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("EngineDb"))
+                options.UseSqlServer(Configuration.GetConnectionString("EngineDb"),
+                sqlServerOption => sqlServerOption.CommandTimeout(3600))
             );
             services.AddDataProtection();
 
