@@ -5,8 +5,8 @@ VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB97480B-243E-4672-BC31-CC43075F48ED}"
 	ProjectSection(SolutionItems) = preProject
+		buildreflectedtypes.bat = buildreflectedtypes.bat
 		README.md = README.md
-		tsreflect.bat = tsreflect.bat
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PE.GLDtos", "src\PE.GLDtos\PE.GLDtos.csproj", "{59CEF8F9-A1E3-4C61-87BB-69DFB4FA4E21}"

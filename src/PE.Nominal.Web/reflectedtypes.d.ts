@@ -81,6 +81,10 @@ declare namespace PE.Nominal {
 		IntacctEmployeeID: string | null;
 		IntacctDepartment: string | null;
 		IntacctLocation: string | null;
+		client_partner_id: string | null;
+		category_name_id: string | null;
+		owner_name_id: string | null;
+		service_type_id: string | null;
 	}
 	interface IJournalGroup {
 		NomOrg: number;
@@ -254,5 +258,9 @@ declare namespace PE.Nominal.Intacct {
 		IntacctCustomerID: string | null;
 		IntacctDepartment: string | null;
 		IntacctLocation: string | null;
+		client_partner_id: string | null;
+		category_name_id: string | null;
+		owner_name_id: string | null;
+		service_type_id: string | null;
 	}
 }

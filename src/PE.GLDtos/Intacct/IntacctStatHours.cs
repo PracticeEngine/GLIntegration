@@ -31,5 +31,14 @@ namespace PE.Nominal.Intacct
         public string IntacctDepartment { get; set; }
 
         public string IntacctLocation { get; set; }
+
+        public string client_partner_id { get; set; }
+
+        public string category_name_id { get; set; }
+
+        public string owner_name_id { get; set; }
+
+        public string service_type_id { get; set; }
+
     }
 }

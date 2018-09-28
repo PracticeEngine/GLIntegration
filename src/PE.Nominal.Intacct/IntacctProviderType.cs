@@ -235,6 +235,32 @@ namespace PE.Nominal.Intacct
                 {
                     line.LocationId = item.IntacctLocation;
                 }
+
+                var customFields = new Dictionary<string, dynamic>();
+
+                if (!String.IsNullOrWhiteSpace(item.client_partner_id))
+                {
+                    customFields.Add("client_partner_id", item.client_partner_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.category_name_id))
+                {
+                    customFields.Add("category_name_id", item.category_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.owner_name_id))
+                {
+                    customFields.Add("owner_name_id", item.owner_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.service_type_id))
+                {
+                    customFields.Add("service_type_id", item.service_type_id);
+                }
+
+                if(customFields.Count() > 0)
+                    line.CustomFields = customFields;
+
                 create.Lines.Add(line);
             }
             OnlineResponse onlineResponse = await client.Execute(create);
@@ -299,6 +325,32 @@ namespace PE.Nominal.Intacct
                 {
                     line.LocationId = item.IntacctLocation;
                 }
+
+                var customFields = new Dictionary<string, dynamic>();
+
+                if (!String.IsNullOrWhiteSpace(item.client_partner_id))
+                {
+                    customFields.Add("client_partner_id", item.client_partner_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.category_name_id))
+                {
+                    customFields.Add("category_name_id", item.category_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.owner_name_id))
+                {
+                    customFields.Add("owner_name_id", item.owner_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.service_type_id))
+                {
+                    customFields.Add("service_type_id", item.service_type_id);
+                }
+
+                if (customFields.Count() > 0)
+                    line.CustomFields = customFields;
+
                 create.Lines.Add(line);
             }
             OnlineResponse onlineResponse = await client.Execute(create);
