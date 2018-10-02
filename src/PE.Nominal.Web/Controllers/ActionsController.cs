@@ -359,6 +359,7 @@ namespace PE.Nominal.Web.Controllers
                         }
                         catch (Exception ex)
                         {
+                            context.WriteLine($"Post Failed for organization {org.PracName}, unflagging records now.");
                             await _actionService.UnFlagTransferredCmd(org.PracID, Journal, hangfireJobId);
                             throw ex;
                         }

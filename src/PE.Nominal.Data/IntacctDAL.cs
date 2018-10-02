@@ -33,7 +33,7 @@ namespace PE.Nominal
         /// <returns></returns>
         public async Task<IEnumerable<IntacctStatHours>> ExtractIntacctHoursJournalQuery(int Org, int BatchID = 0, string Journal = null, string HangfireJobId = null)
         {
-            var results = await context.Database.SqlQueryAsync<IntacctStatHours>("pe_NL_Journal_Export {0}, {1}, {2}, {3}", Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
+            var results = await context.Database.SqlQueryAsync<IntacctStatHours>("pe_NL_Journal_Transfer {0}, {1}, {2}, {3}", Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
             return results;
         }
         

@@ -160,7 +160,15 @@ namespace PE.Nominal.Intacct
             var desc = "Practice Engine Journal: (Batch #" + example.NomBatch + ")";
             var comment = orgConfig.CreateAsDraft ? "Draft Journal Created from Practice Engine" : "Journal Created from Practice Engine";
             var client = GetClient(Org);
-            await this.SendJournalCmd(client, Org, lines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
+
+            int numCalls = (lines.Count() / 100) + 1;
+            int curCall = 0;
+            while (curCall < numCalls)
+            {
+                var theselines = lines.Skip(curCall * 100).Take(100);
+                await this.SendJournalCmd(client, Org, theselines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
+                curCall++;
+            }
         }
 
 
