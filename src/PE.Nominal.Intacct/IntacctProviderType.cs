@@ -14,6 +14,8 @@ using Intacct.SDK.Functions.Common;
 using Intacct.SDK;
 using Intacct.SDK.Functions.GeneralLedger;
 using Intacct.SDK.Xml;
+using Hangfire.Server;
+using Hangfire.Console;
 
 namespace PE.Nominal.Intacct
 {
@@ -153,7 +155,7 @@ namespace PE.Nominal.Intacct
             return cached;
         }
 
-        public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol)
+        public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol, PerformContext performContext)
         {
             var orgConfig = GetOrgConfig(Org);
             var example = lines.First();
@@ -166,6 +168,10 @@ namespace PE.Nominal.Intacct
             while (curCall < numCalls)
             {
                 var theselines = lines.Skip(curCall * 100).Take(100);
+                if (performContext != null)
+                {
+                    performContext.WriteLine("Processing Batch #{0} of {1}", curCall + 1, numCalls);
+                }
                 await this.SendJournalCmd(client, Org, theselines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
                 curCall++;
             }
@@ -179,7 +185,7 @@ namespace PE.Nominal.Intacct
         /// <param name="lines"></param>
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
-        public async Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol)
+        public async Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext)
         {
             var orgConfig = GetOrgConfig(Org);
             var example = lines.First();
@@ -405,7 +411,7 @@ namespace PE.Nominal.Intacct
         }
 
 
-        public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol)
+        public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol, PerformContext performContext)
         {
             var orgConfig = GetOrgCashConfig(Org);
             var example = lines.First();

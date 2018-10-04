@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hangfire.Server;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PE.Nominal.Intacct;
 using PE.Nominal.Provider;
@@ -82,7 +83,7 @@ namespace PE.Nominal.Fake
         /// <param name="lines"></param>
         /// <param name="journal"></param>
         /// <returns></returns>
-        public Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal)
+        public Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext)
         {
             _logger.LogInformation("START Cash Journal for Org:{0} to Journal:{1}", Org, journal);
             foreach(var line in lines)
@@ -100,7 +101,7 @@ namespace PE.Nominal.Fake
         /// <param name="lines"></param>
         /// <param name="journal"></param>
         /// <returns></returns>
-        public Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal)
+        public Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext)
         {
             _logger.LogInformation("START (normal) Journal for Org:{0} to Journal:{1}", Org, journal);
             foreach (var line in lines)
@@ -118,7 +119,7 @@ namespace PE.Nominal.Fake
         /// <param name="lines"></param>
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
-        public Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol)
+        public Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext)
         {
             _logger.LogInformation("START Stat Hours Journal for Org:{0} to Journal:{1}", Org, JournalSymbol);
             foreach (var line in lines)

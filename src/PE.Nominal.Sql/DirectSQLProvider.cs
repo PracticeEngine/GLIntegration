@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire.Server;
+using Microsoft.EntityFrameworkCore;
 using PE.Nominal.Intacct;
 using PE.Nominal.Provider;
 using System;
@@ -39,7 +40,7 @@ namespace PE.Nominal
         }
 
 
-        public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal)
+        public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext)
         {
             // NOTE: journal parameter is ignored for this implementation
 
@@ -53,7 +54,7 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Post 0, @Result", result).ConfigureAwait(false);
         }
 
-        public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal)
+        public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext)
         {
             // NOTE: journal parameter is ignored for this implementation
 
@@ -75,7 +76,7 @@ namespace PE.Nominal
         /// <param name="lines"></param>
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
-        public Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol)
+        public Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext)
         {
             throw new NotImplementedException();
         }

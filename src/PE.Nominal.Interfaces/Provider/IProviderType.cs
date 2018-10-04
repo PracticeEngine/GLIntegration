@@ -1,4 +1,5 @@
-﻿using PE.Nominal.Intacct;
+﻿using Hangfire.Server;
+using PE.Nominal.Intacct;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ namespace PE.Nominal.Provider
         /// <param name="lines"></param>
         /// <param name="journal"></param>
         /// <returns></returns>
-        Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal);
+        Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext);
 
         /// <summary>
         /// Performs Bank Reconciliation (Cash Book Posting)
@@ -38,7 +39,7 @@ namespace PE.Nominal.Provider
         /// <param name="lines"></param>
         /// <param name="journal"></param>
         /// <returns></returns>
-        Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal);
+        Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext);
 
         /// <summary>
         /// Implemented for Intacct to post Statistics Journal (not required for other implemetnations)
@@ -47,6 +48,6 @@ namespace PE.Nominal.Provider
         /// <param name="lines"></param>
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
-        Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol);
+        Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext);
     }
 }

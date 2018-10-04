@@ -353,7 +353,7 @@ namespace PE.Nominal.Web.Controllers
                                 }
                             }
                             context.WriteLine($"Preparing to send Post for organization {org.PracName}.");
-                            await _glProvider.PostJournalCmd(org.PracID, lines, Journal);
+                            await _glProvider.PostJournalCmd(org.PracID, lines, Journal, context);
                             context.WriteLine($"Sent Post for organization {org.PracName}, flagging records now.");
                             await _actionService.FlagTransferredCmd(org.PracID, Journal, hangfireJobId);
                         }
@@ -418,7 +418,7 @@ namespace PE.Nominal.Web.Controllers
                             if (lines == null || lines.Count() == 0)
                                 continue;
 
-                            await _glProvider.PostStatHourJournalCmd(org.PracID, lines, Journal);
+                            await _glProvider.PostStatHourJournalCmd(org.PracID, lines, Journal, context);
                             await _actionService.FlagTransferredCmd(org.PracID, Journal, hangfireJobId);
                         }
                         catch (Exception ex)
@@ -545,7 +545,7 @@ namespace PE.Nominal.Web.Controllers
                                 }
                             }
 
-                            await _glProvider.CashJournalCmd(org.PracID, lines, journal);
+                            await _glProvider.CashJournalCmd(org.PracID, lines, journal, null);
                             await _actionService.FlagBankRecTransferredCmd(org.PracID, journal);
                         }
                     }
@@ -644,7 +644,7 @@ namespace PE.Nominal.Web.Controllers
                                 }
                             }
 
-                            await _glProvider.PostJournalCmd(org.PracID, lines, Journal);
+                            await _glProvider.PostJournalCmd(org.PracID, lines, Journal, null);
                         }
                     }
                     catch (AggregateException ax)
@@ -778,7 +778,7 @@ namespace PE.Nominal.Web.Controllers
                                 }
                             }
 
-                            await _glProvider.CashJournalCmd(org.PracID, lines, journal);
+                            await _glProvider.CashJournalCmd(org.PracID, lines, journal, null);
                         }
                     }
                     catch (AggregateException ax)
