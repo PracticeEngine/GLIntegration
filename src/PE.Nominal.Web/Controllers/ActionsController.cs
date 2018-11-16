@@ -518,21 +518,39 @@ namespace PE.Nominal.Web.Controllers
 
         [HttpPost]
         [Route("BankReconciliation")]
-        public async Task<IActionResult> BankReconciliation()
+        public IActionResult BankReconciliation()
         {
             try
             {
-                var orgList = await _actionService.OrgListQuery();
-                var toTransfer = orgList.Where(o => o.NLTransfer);
-                List<string> errors = new List<string>();
-                foreach (var org in toTransfer)
-                {
-                    try
-                    {
-                        foreach (var journal in _journalOptions.Journals)
-                        {
-                            var lines = await _actionService.ExtractBankRecQuery(org.PracID, Journal: journal);
+                BackgroundJob.Enqueue(() => RunBankReconciliation(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
 
+        }
+
+        public async Task RunBankReconciliation(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    foreach (var journal in _journalOptions.Journals)
+                    {
+                        try
+                        {
+                            context.WriteLine($"Extracting Reconciliation for organization {org.PracName} and journal {journal}.");
+                            var lines = await _actionService.ExtractBankRecQuery(org.PracID, Journal: journal, HangfireJobId: hangfireJobId);
+
+                            context.WriteLine($"Found {lines.Count()} lines for {org.PracName} and journal {journal}.");
                             if (lines == null || lines.Count() == 0)
                                 continue;
 
@@ -545,35 +563,32 @@ namespace PE.Nominal.Web.Controllers
                                 }
                             }
 
-                            await _glProvider.CashJournalCmd(org.PracID, lines, journal, null);
-                            await _actionService.FlagBankRecTransferredCmd(org.PracID, journal);
+                            context.WriteLine($"Preparing to send Reconciliation for organization {org.PracName}.");
+                            await _glProvider.CashJournalCmd(org.PracID, lines, journal, context);
+                            context.WriteLine($"Sent Reconciliation for organization {org.PracName}, flagging records now.");
+                            await _actionService.FlagBankRecTransferredCmd(org.PracID, journal, hangfireJobId);
+                        }
+                        catch (Exception ex)
+                        {
+                            context.WriteLine($"Transfer Failed for organization {org.PracName}, unflagging records now.");
+                            await _actionService.UnFlagBankRecTransferredCmd(org.PracID, journal, hangfireJobId);
+                            throw ex;
                         }
                     }
-                    catch (AggregateException ax)
-                    {
-                        var msgs = String.Join(" | ", ax.InnerExceptions.Select(e => e.Message));
-                        errors.Add($"The organization {org.PracName} failed to transfer due to {msgs}");
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add($"The organization {org.PracName} failed to transfer due to {ex.Message}");
-                    }
                 }
-                if (errors.Count > 0)
+                catch (ResultException re)
                 {
-                    return BadRequest(String.Join("\n", errors));
+                    context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
                 }
-                return Ok();
-            }
-            catch (ResultException re)
-            {
-                _logger.LogError(re.Message, re);
-                return BadRequest(String.Join("\n", re.Errors));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message, ex);
-                return BadRequest(ex.Message);
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                }
             }
         }
 

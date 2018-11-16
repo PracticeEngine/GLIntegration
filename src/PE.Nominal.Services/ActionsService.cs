@@ -158,14 +158,19 @@ namespace PE.Nominal
             await nominalDAL.UpdateOrgCmd(PracID, NLServer, NLDatabase, NLTransfer).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<JournalExtract>> ExtractBankRecQuery(int Org, int BatchID=0, string Journal = null)
+        public async Task<IEnumerable<JournalExtract>> ExtractBankRecQuery(int Org, int BatchID = 0, string Journal = null, string HangfireJobId = null)
         {
-            return await nominalDAL.ExtractBankRecQuery(Org, BatchID, Journal).ConfigureAwait(false);
+            return await nominalDAL.ExtractBankRecQuery(Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
-        public async Task FlagBankRecTransferredCmd(int PracID, string journal)
+        public async Task FlagBankRecTransferredCmd(int PracID, string journal, string HangfireJobId)
         {
-            await nominalDAL.FlagBankRecTransferredCmd(PracID, journal).ConfigureAwait(false);
+            await nominalDAL.FlagBankRecTransferredCmd(PracID, journal, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagBankRecTransferredCmd(int PracID, string Journal, string HangfireJobId)
+        {
+            await nominalDAL.UnFlagBankRecTransferredCmd(PracID, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<PostPeriods>> JournalPeriodsQuery()

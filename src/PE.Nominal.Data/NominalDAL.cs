@@ -192,15 +192,20 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Org_Update {0}, {1}, {2}, {3}", PracID, NLServer, NLDatabase, NLTransfer).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<JournalExtract>> ExtractBankRecQuery(int Org, int BatchID=0, string Journal = null)
+        public async Task<IEnumerable<JournalExtract>> ExtractBankRecQuery(int Org, int BatchID = 0, string Journal = null, string HangFireJobId = null)
         {
-            var results = await context.Database.SqlQueryAsync<JournalExtract>("pe_NL_Cashbook_Extract {0}, {1}, {2}", Org, BatchID, Journal).ConfigureAwait(false);
+            var results = await context.Database.SqlQueryAsync<JournalExtract>("pe_NL_Cashbook_Extract {0}, {1}, {2}, {3}", Org, BatchID, Journal, HangFireJobId).ConfigureAwait(false);
             return results;
         }
 
-        public async Task FlagBankRecTransferredCmd(int PracID, string journal)
+        public async Task FlagBankRecTransferredCmd(int PracID, string journal, string HangFireJobId)
         {
-            await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Worked {0}, {1}", PracID, journal).ConfigureAwait(false);
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Worked {0}, {1}, {2}", PracID, journal, HangFireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagBankRecTransferredCmd(int PracID, string journal, string HangFireJobId)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Failed {0}, {1}, {2}", PracID, journal, HangFireJobId).ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<PostPeriods>> JournalPeriodsQuery()

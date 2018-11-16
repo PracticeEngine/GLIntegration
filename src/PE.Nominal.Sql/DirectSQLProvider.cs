@@ -51,7 +51,7 @@ namespace PE.Nominal
             {
                 Direction = System.Data.ParameterDirection.Output
             };
-            await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Post 0, @Result", result).ConfigureAwait(false);
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Cashbook_Post {0}, @Result", batch, result).ConfigureAwait(false);
         }
 
         public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string journal, PerformContext performContext)

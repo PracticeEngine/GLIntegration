@@ -162,19 +162,7 @@ namespace PE.Nominal.Intacct
             var desc = "Practice Engine Journal: (Batch #" + example.NomBatch + ")";
             var comment = orgConfig.CreateAsDraft ? "Draft Journal Created from Practice Engine" : "Journal Created from Practice Engine";
             var client = GetClient(Org);
-
-            int numCalls = (lines.Count() / 100) + 1;
-            int curCall = 0;
-            while (curCall < numCalls)
-            {
-                var theselines = lines.Skip(curCall * 100).Take(100);
-                if (performContext != null)
-                {
-                    performContext.WriteLine("Processing Batch #{0} of {1}", curCall + 1, numCalls);
-                }
-                await this.SendJournalCmd(client, Org, theselines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
-                curCall++;
-            }
+            await this.SendJournalCmd(client, Org, lines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
         }
 
 
@@ -257,9 +245,19 @@ namespace PE.Nominal.Intacct
                     customFields.Add("client_partner_id", item.client_partner_id);
                 }
 
+                if (!String.IsNullOrWhiteSpace(item.client_partner))
+                {
+                    customFields.Add("client_partner", item.client_partner);
+                }
+
                 if (!String.IsNullOrWhiteSpace(item.category_name_id))
                 {
                     customFields.Add("category_name_id", item.category_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.category_name))
+                {
+                    customFields.Add("category_name", item.category_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name_id))
@@ -267,12 +265,22 @@ namespace PE.Nominal.Intacct
                     customFields.Add("owner_name_id", item.owner_name_id);
                 }
 
+                if (!String.IsNullOrWhiteSpace(item.owner_name))
+                {
+                    customFields.Add("owner_name", item.owner_name);
+                }
+
                 if (!String.IsNullOrWhiteSpace(item.service_type_id))
                 {
                     customFields.Add("service_type_id", item.service_type_id);
                 }
 
-                if(customFields.Count() > 0)
+                if (!String.IsNullOrWhiteSpace(item.service_type))
+                {
+                    customFields.Add("service_type", item.service_type);
+                }
+
+                if (customFields.Count() > 0)
                     line.CustomFields = customFields;
 
                 create.Lines.Add(line);
@@ -347,9 +355,19 @@ namespace PE.Nominal.Intacct
                     customFields.Add("client_partner_id", item.client_partner_id);
                 }
 
+                if (!String.IsNullOrWhiteSpace(item.client_partner))
+                {
+                    customFields.Add("client_partner", item.client_partner);
+                }
+
                 if (!String.IsNullOrWhiteSpace(item.category_name_id))
                 {
                     customFields.Add("category_name_id", item.category_name_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.category_name))
+                {
+                    customFields.Add("category_name", item.category_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name_id))
@@ -357,9 +375,19 @@ namespace PE.Nominal.Intacct
                     customFields.Add("owner_name_id", item.owner_name_id);
                 }
 
+                if (!String.IsNullOrWhiteSpace(item.owner_name))
+                {
+                    customFields.Add("owner_name", item.owner_name);
+                }
+
                 if (!String.IsNullOrWhiteSpace(item.service_type_id))
                 {
                     customFields.Add("service_type_id", item.service_type_id);
+                }
+
+                if (!String.IsNullOrWhiteSpace(item.service_type))
+                {
+                    customFields.Add("service_type", item.service_type);
                 }
 
                 if (customFields.Count() > 0)

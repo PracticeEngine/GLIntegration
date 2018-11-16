@@ -40,5 +40,12 @@ namespace PE.Nominal.Intacct
 
         public string service_type_id { get; set; }
 
+        public string client_partner { get; set; }
+
+        public string category_name { get; set; }
+
+        public string owner_name { get; set; }
+
+        public string service_type { get; set; }
     }
 }
