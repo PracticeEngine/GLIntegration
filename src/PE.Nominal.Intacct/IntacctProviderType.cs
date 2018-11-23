@@ -247,7 +247,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.client_partner))
                 {
-                    customFields.Add("client_partner", item.client_partner);
+                    customFields.Add("GLDIMCLIENT_PARTNER", item.client_partner);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.category_name_id))
@@ -257,7 +257,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.category_name))
                 {
-                    customFields.Add("category_name", item.category_name);
+                    customFields.Add("GLDIMCATEGORY_NAME", item.category_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name_id))
@@ -267,7 +267,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name))
                 {
-                    customFields.Add("owner_name", item.owner_name);
+                    customFields.Add("GLDIMOWNER_NAME", item.owner_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.service_type_id))
@@ -277,7 +277,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.service_type))
                 {
-                    customFields.Add("service_type", item.service_type);
+                    customFields.Add("GLDIMSERVICE_TYPE", item.service_type);
                 }
 
                 if (customFields.Count() > 0)
@@ -357,7 +357,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.client_partner))
                 {
-                    customFields.Add("client_partner", item.client_partner);
+                    customFields.Add("GLDIMCLIENT_PARTNER", item.client_partner);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.category_name_id))
@@ -367,7 +367,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.category_name))
                 {
-                    customFields.Add("category_name", item.category_name);
+                    customFields.Add("GLDIMCATEGORY_NAME", item.category_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name_id))
@@ -377,7 +377,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name))
                 {
-                    customFields.Add("owner_name", item.owner_name);
+                    customFields.Add("GLDIMOWNER_NAME", item.owner_name);
                 }
 
                 if (!String.IsNullOrWhiteSpace(item.service_type_id))
@@ -387,7 +387,7 @@ namespace PE.Nominal.Intacct
 
                 if (!String.IsNullOrWhiteSpace(item.service_type))
                 {
-                    customFields.Add("service_type", item.service_type);
+                    customFields.Add("GLDIMSERVICE_TYPE", item.service_type);
                 }
 
                 if (customFields.Count() > 0)
