@@ -240,40 +240,40 @@ namespace PE.Nominal.Intacct
 
                 var customFields = new Dictionary<string, dynamic>();
 
-                if (!String.IsNullOrWhiteSpace(item.client_partner_id))
-                {
-                    customFields.Add("client_partner_id", item.client_partner_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.client_partner_id))
+                //{
+                //    customFields.Add("client_partner_id", item.client_partner_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.client_partner))
                 {
                     customFields.Add("GLDIMCLIENT_PARTNER", item.client_partner);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.category_name_id))
-                {
-                    customFields.Add("category_name_id", item.category_name_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.category_name_id))
+                //{
+                //    customFields.Add("category_name_id", item.category_name_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.category_name))
                 {
                     customFields.Add("GLDIMCATEGORY_NAME", item.category_name);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.owner_name_id))
-                {
-                    customFields.Add("owner_name_id", item.owner_name_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.owner_name_id))
+                //{
+                //    customFields.Add("owner_name_id", item.owner_name_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name))
                 {
                     customFields.Add("GLDIMOWNER_NAME", item.owner_name);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.service_type_id))
-                {
-                    customFields.Add("service_type_id", item.service_type_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.service_type_id))
+                //{
+                //    customFields.Add("service_type_id", item.service_type_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.service_type))
                 {
@@ -350,40 +350,40 @@ namespace PE.Nominal.Intacct
 
                 var customFields = new Dictionary<string, dynamic>();
 
-                if (!String.IsNullOrWhiteSpace(item.client_partner_id))
-                {
-                    customFields.Add("client_partner_id", item.client_partner_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.client_partner_id))
+                //{
+                //    customFields.Add("client_partner_id", item.client_partner_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.client_partner))
                 {
                     customFields.Add("GLDIMCLIENT_PARTNER", item.client_partner);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.category_name_id))
-                {
-                    customFields.Add("category_name_id", item.category_name_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.category_name_id))
+                //{
+                //    customFields.Add("category_name_id", item.category_name_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.category_name))
                 {
                     customFields.Add("GLDIMCATEGORY_NAME", item.category_name);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.owner_name_id))
-                {
-                    customFields.Add("owner_name_id", item.owner_name_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.owner_name_id))
+                //{
+                //    customFields.Add("owner_name_id", item.owner_name_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.owner_name))
                 {
                     customFields.Add("GLDIMOWNER_NAME", item.owner_name);
                 }
 
-                if (!String.IsNullOrWhiteSpace(item.service_type_id))
-                {
-                    customFields.Add("service_type_id", item.service_type_id);
-                }
+                //if (!String.IsNullOrWhiteSpace(item.service_type_id))
+                //{
+                //    customFields.Add("service_type_id", item.service_type_id);
+                //}
 
                 if (!String.IsNullOrWhiteSpace(item.service_type))
                 {
