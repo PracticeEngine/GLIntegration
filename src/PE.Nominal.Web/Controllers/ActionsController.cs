@@ -826,5 +826,71 @@ namespace PE.Nominal.Web.Controllers
 
         #endregion Methods for Repost Journal
 
+        #region Making Tax Digital
+
+
+        [HttpPost]
+        [Route("MTDSync")]
+        public IActionResult MTDSync()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunMTDSync(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        public async Task RunMTDSync(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    // Added Loop for Multiple-Journal Posting Process
+                    foreach (var Journal in _journalOptions.IntacctHourJournals)
+                    {
+                        try
+                        {
+                            var lines = await _actionService.ExtractIntacctHoursJournalQuery(org.PracID, Journal: Journal, HangfireJobId: hangfireJobId);
+
+                            if (lines == null || lines.Count() == 0)
+                                continue;
+
+                            await _glProvider.PostStatHourJournalCmd(org.PracID, lines, Journal, context);
+                            await _actionService.FlagTransferredCmd(org.PracID, Journal, hangfireJobId);
+                        }
+                        catch (Exception ex)
+                        {
+                            await _actionService.UnFlagTransferredCmd(org.PracID, Journal, hangfireJobId);
+                            throw ex;
+                        }
+                    }
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+
+        #endregion Making Tax Digital
     }
 }

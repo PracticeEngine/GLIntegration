@@ -784,7 +784,7 @@
 
                 this.table = $("#gltable").DataTable({
                     select: {
-                        style: "row",
+                        style: "single",
                         info: false
                     },
                     searching: false,
@@ -931,7 +931,7 @@
 
                 this.table = $("#gltable").DataTable({
                     select: {
-                        style: "row",
+                        style: "single",
                         info: false
                     },
                     searching: false,
@@ -1215,6 +1215,34 @@
             await this.ajaxSendOnly("api/IntacctSync/SyncAll" + newQS, {});
             alert("Synchronization has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.clearMessage();
+        }
+    }
+
+    /**
+     * MTD Sync VM
+     */
+    export class MTD extends BaseVM {
+        startDate: string;
+        endDate: string;
+        constructor() {
+            console.info("MTD");
+            super(false);
+            let datesData = this.getSession<PE.Nominal.ISelectedDates>("SelectedDates");
+            this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.isReady(true);
+        }
+
+        async run(): Promise<void> {
+            this.showMessage("Running MTD Sync...");
+            await this.ajaxSendOnly("api/Actions/MTDSync", {});
+            this.clearMessage();
+            alert("Making Tax Digital Sync has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+            this.goHome();
         }
     }
 }

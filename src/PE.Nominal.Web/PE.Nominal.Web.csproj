@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <TypeScriptToolsVersion>2.6</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>2.7</TypeScriptToolsVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -57,6 +57,22 @@
 
 <PropertyGroup>
   <UserSecretsId>PE-Nominal-Web-9dd77c86-1754-11e8-b642-0ed5f89f718b</UserSecretsId>
+</PropertyGroup>
+
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <TypeScriptTarget>ES5</TypeScriptTarget>
+  <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+  <TypeScriptModuleKind />
+  <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+  <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+  <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
+  <TypeScriptOutFile />
+  <TypeScriptOutDir />
+  <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+  <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+  <TypeScriptSourceMap>True</TypeScriptSourceMap>
+  <TypeScriptMapRoot />
+  <TypeScriptSourceRoot />
 </PropertyGroup>
 
 </Project>

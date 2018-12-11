@@ -215,8 +215,7 @@
                         <div class="col-md-3">
                             <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
                                 <div>
-                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}">
-                                    </ul>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
                                 </div>
                             </div>
                         </div>
@@ -230,8 +229,8 @@
                     <button class="btn btn-info" data-bind="click:report">Report</button>
                     @if (Model.SQLIntegration)
                     {
-                    <a class="btn btn-default" href="~/api/Actions/Journal.csv" target="_blank" download="Journal.csv">Export</a>
-                    <button class="btn btn-default" data-bind="click:flagTransfer">Flag as Transferred</button>
+                        <a class="btn btn-default" href="~/api/Actions/Journal.csv" target="_blank" download="Journal.csv">Export</a>
+                        <button class="btn btn-default" data-bind="click:flagTransfer">Flag as Transferred</button>
                     }
                     <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
                     @if (Model.IntacctHrsJournal)
@@ -304,7 +303,7 @@
                             End: <strong data-bind="text:endDate"></strong>
                         </div>
                     </div>
-                    <p>The update will transfer all complete Lodgement Batches entered since the last update.</p>               
+                    <p>The update will transfer all complete Lodgement Batches entered since the last update.</p>
                 </div>
                 <div class="panel-footer text-right">
                     <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
@@ -356,7 +355,6 @@
         </div>
     </div>
 </template>
-
 <template id="body-NLImport">
     <div class="row">
         <div class="col-md-offset-3 col-md-6">
@@ -513,8 +511,7 @@
                         <div class="form-group form-group-sm">
                             <label class="control-label col-md-4">Standard Disbursement Code</label>
                             <div class="col-md-8">
-                                <select class="form-control" data-bind="value:stdDisbCode,options:disbCodes, optionsText:'ChargeName',optionsValue:'ChargeCode', optionsCaption:'Choose...'">
-                                </select>
+                                <select class="form-control" data-bind="value:stdDisbCode,options:disbCodes, optionsText:'ChargeName',optionsValue:'ChargeCode', optionsCaption:'Choose...'"></select>
                             </div>
                         </div>
                         <div class="form-group form-group-sm">
@@ -546,16 +543,16 @@
                         </div>
                         @if (Model.SQLIntegration)
                         {
-                        <div class="form-group form-group-sm">
-                            <label class="control-label col-md-4">SQL GL Type Is</label>
-                            <div class="col-md-8">
-                                <select class="form-control" data-bind="value:glSystem">
-                                    <option value="AD">Access Dimensions (SQL)</option>
-                                    <option value="GP">Great Plains Dynamics (SQL)</option>
-                                    <option value="SS">SunSystems (CSV)</option>
-                                </select>
+                            <div class="form-group form-group-sm">
+                                <label class="control-label col-md-4">SQL GL Type Is</label>
+                                <div class="col-md-8">
+                                    <select class="form-control" data-bind="value:glSystem">
+                                        <option value="AD">Access Dimensions (SQL)</option>
+                                        <option value="GP">Great Plains Dynamics (SQL)</option>
+                                        <option value="SS">SunSystems (CSV)</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
                         }
                         <div class="form-group form-group-sm">
                             <div class="col-md-offset-4 col-md-8">
@@ -606,46 +603,46 @@
                 <div class="panel-heading">
                     Intacct Sync (STATS JOURNAL)
                 </div>
-                    @if (Model.SQLIntegration)
-                    {
-                        <div class="panel-body">
-                            <div class="alert alert-warning">This is not available with a SQL Integraion</div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-xs-12 text-right">
-                                    <form class="form-inline">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" data-bind="checked:onlyNew"> Sync Only New Items (no update)
-                                            </label>
-                                        </div>
-                                    </form>
-                                </div>
+                @if (Model.SQLIntegration)
+                {
+                    <div class="panel-body">
+                        <div class="alert alert-warning">This is not available with a SQL Integraion</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-12 text-right">
+                                <form class="form-inline">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" data-bind="checked:onlyNew"> Sync Only New Items (no update)
+                                        </label>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                        <div class="list-group">
-                            <div class="list-group-item">
-                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runEmployeeSync">Start Employees</button>
-                                Synchronize Employees (from PE Staff)
-                            </div>
-                            <div class="list-group-item">
-                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runCustomerSync">Start Customers</button>
-                                Synchronize Customers (from PE Clients)
-                            </div>
-                            <div class="list-group-item">
-                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runProjectSync">Start Projects</button>
-                                Synchronize Projects (from PE Jobs)
-                            </div>
-                            <div class="list-group-item">
-                                <button class="pull-right btn btn-default btn-xs" data-bind="click:runSyncAll">Start All</button>
-                                Synchronize All (Staff -> Jobs -> Clients)
-                            </div>
+                    </div>
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <button class="pull-right btn btn-default btn-xs" data-bind="click:runEmployeeSync">Start Employees</button>
+                            Synchronize Employees (from PE Staff)
                         </div>
-                    }
+                        <div class="list-group-item">
+                            <button class="pull-right btn btn-default btn-xs" data-bind="click:runCustomerSync">Start Customers</button>
+                            Synchronize Customers (from PE Clients)
+                        </div>
+                        <div class="list-group-item">
+                            <button class="pull-right btn btn-default btn-xs" data-bind="click:runProjectSync">Start Projects</button>
+                            Synchronize Projects (from PE Jobs)
+                        </div>
+                        <div class="list-group-item">
+                            <button class="pull-right btn btn-default btn-xs" data-bind="click:runSyncAll">Start All</button>
+                            Synchronize All (Staff -> Jobs -> Clients)
+                        </div>
+                    </div>
+                }
                 <div class="panel-footer text-right">
                     <button class="btn btn-default" data-bind="click:goHome">Close</button>
                     <a href="~/hangfire" target="_blank" class="btn btn-info">Hangfire Dashboard</a>
@@ -672,4 +669,32 @@
     </div>
     <!-- ko template:'nested-Map-Editor'-->
     <!-- /ko -->
+</template>
+<template id="body-MTD">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Making Tax Digital
+                </div>               
+                <div class="panel-body" data-bind="if:isReady">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>The sync process will create new Debtor accounts and send the latest VAT Invoice data.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                    <a href="~/hangfire" target="_blank" class="btn btn-info">Hangfire Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>

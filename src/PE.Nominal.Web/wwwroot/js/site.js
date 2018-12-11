@@ -871,7 +871,7 @@ var PE;
                                 }
                                 this.table = $("#gltable").DataTable({
                                     select: {
-                                        style: "row",
+                                        style: "single",
                                         info: false
                                     },
                                     searching: false,
@@ -1044,7 +1044,7 @@ var PE;
                                 }
                                 this.table = $("#gltable").DataTable({
                                     select: {
-                                        style: "row",
+                                        style: "single",
                                         info: false
                                     },
                                     searching: false,
@@ -1420,6 +1420,46 @@ var PE;
             return IntacctSync;
         }(BaseVM));
         Nominal.IntacctSync = IntacctSync;
+        var MTD = (function (_super) {
+            __extends(MTD, _super);
+            function MTD() {
+                var _this = this;
+                console.info("MTD");
+                _this = _super.call(this, false) || this;
+                var datesData = _this.getSession("SelectedDates");
+                _this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+                _this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+                _this.init();
+                return _this;
+            }
+            MTD.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        this.isReady(true);
+                        return [2];
+                    });
+                });
+            };
+            MTD.prototype.run = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Running MTD Sync...");
+                                return [4, this.ajaxSendOnly("api/Actions/MTDSync", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Making Tax Digital Sync has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+                                this.goHome();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return MTD;
+        }(BaseVM));
+        Nominal.MTD = MTD;
     })(Nominal = PE.Nominal || (PE.Nominal = {}));
 })(PE || (PE = {}));
 ko.bindingHandlers.bsmodal = {

@@ -219,5 +219,27 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<CashbookRepostBatch>("pe_NL_Cashbook_List {0}", NomPeriodIndex).ConfigureAwait(false);
             return results;
         }
+
+        #region MTD
+
+        public async Task<IEnumerable<MTDLineItem>> MTDLines()
+        {
+            var results = await context.Database.SqlQueryAsync<MTDLineItem>("pes_MTD_Untransferred_Lines_List").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<MTDInvoice>> MTDInvoices()
+        {
+            var results = await context.Database.SqlQueryAsync<MTDInvoice>("pes_MTD_Untransferred_Invoice_List").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<MTDClient>> MTDClients()
+        {
+            var results = await context.Database.SqlQueryAsync<MTDClient>("pes_MTD_Untransferred_Client_List").ConfigureAwait(false);
+            return results;
+        }
+
+        #endregion
     }
 }
