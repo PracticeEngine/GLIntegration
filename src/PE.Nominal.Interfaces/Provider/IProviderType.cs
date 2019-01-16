@@ -49,5 +49,15 @@ namespace PE.Nominal.Provider
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
         Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext);
+
+        /// <summary>
+        /// Implemented for MTDct to post Sales Data
+        /// </summary>
+        /// <param name="Org"></param>
+        /// <param name="clients"></param>
+        /// <param name="invoices"></param>
+        /// <param name="lines"></param>
+        /// <returns></returns>
+        Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext);
     }
 }

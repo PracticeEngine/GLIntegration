@@ -42,6 +42,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PE.Nominal.Fake", "src\PE.N
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "PE.CustomProcedures", "db\PE.CustomProcedures\PE.CustomProcedures.sqlproj", "{109C31AD-145F-40BC-9C9F-6D1649F35D02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PE.Nominal.Xero", "src\PE.Nominal.Xero\PE.Nominal.Xero.csproj", "{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -96,6 +98,10 @@ Global
 		{109C31AD-145F-40BC-9C9F-6D1649F35D02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{109C31AD-145F-40BC-9C9F-6D1649F35D02}.Release|Any CPU.Build.0 = Release|Any CPU
 		{109C31AD-145F-40BC-9C9F-6D1649F35D02}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -111,6 +117,7 @@ Global
 		{3B7D1B0A-AEB9-40EE-99AE-FC0BA7B719C2} = {2669A00B-ED59-4DEF-A180-A5E2E63231AA}
 		{AE007E71-1B9D-460B-B8EC-C5048BB1D5B1} = {0FCF8A22-2456-404A-8D68-AA5113DB6F56}
 		{109C31AD-145F-40BC-9C9F-6D1649F35D02} = {2669A00B-ED59-4DEF-A180-A5E2E63231AA}
+		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361} = {0FCF8A22-2456-404A-8D68-AA5113DB6F56}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F395B620-175D-43AA-9AD1-AF8B937790E8}

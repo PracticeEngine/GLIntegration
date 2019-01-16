@@ -129,5 +129,10 @@ namespace PE.Nominal.Fake
             _logger.LogInformation("FINISH Stat Hours Journal for Org:{0} to Journal:{1}", Org, JournalSymbol);
             return Task.CompletedTask;
         }
+
+        public Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
