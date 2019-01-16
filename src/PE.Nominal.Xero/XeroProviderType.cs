@@ -1,31 +1,28 @@
-﻿using PE.Nominal.Provider;
-using System;
-using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using System.Linq;
-using System.Xml.Linq;
-using Microsoft.Extensions.Caching.Memory;
-using System.Web;
+﻿using Hangfire.Server;
 using Microsoft.AspNetCore.Hosting;
-using System.IO;
-using Intacct.SDK.Functions.Common;
-using Intacct.SDK;
-using Intacct.SDK.Functions.GeneralLedger;
-using Intacct.SDK.Xml;
-using Hangfire.Server;
-using Hangfire.Console;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using PE.Nominal.Intacct;
+using PE.Nominal.Provider;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using Xero.Api.Core;
+using Xero.Api.Infrastructure.Authenticators;
+using Xero.Api.Infrastructure.OAuth;
 
-namespace PE.Nominal.Intacct
+namespace PE.Nominal.XeroGL
 {
-    public class IntacctProviderType : IntacctBaseService, IProviderType
+    public class XeroProviderType : XeroBaseService, IProviderType
     {
         private readonly IMemoryCache _cache;
         const string cacheTypesFormat = "intacct_cache_accttypes_{0}";
         const string cacheNameFormat = "intacct_cache_acctlist_{0}";
 
-        public IntacctProviderType(IOptions<IntacctConfig> config, IMemoryCache cache, IHostingEnvironment env)
+        public XeroProviderType(IOptions<XeroConfig> config, IMemoryCache cache, IHostingEnvironment env)
             :base(config.Value, env)
         {
             _cache = cache;
@@ -43,7 +40,7 @@ namespace PE.Nominal.Intacct
             // Items to build our lists
             var accountList = new Dictionary<string,GLAccount>();
             var accountTypeList = new Dictionary<string, GLType>();
-
+            /*
             // Perform Priming Read
             ReadByQuery read = new ReadByQuery
             {
@@ -51,6 +48,7 @@ namespace PE.Nominal.Intacct
                 PageSize = 1000
             };
             var client = GetClient(Org);
+
             var onlineResponse = await client.Execute(read);
             var xmlResult = onlineResponse.Results.First();
             xmlResult.EnsureStatusSuccess();
@@ -77,7 +75,7 @@ namespace PE.Nominal.Intacct
                 // Increment the Counter
                 receivedCount += xmlResult.Count;
             }
-
+            */
             // Save to Cache
             _cache.Set(String.Format(cacheTypesFormat, Org), accountTypeList.Values.OrderBy(glt => glt.AccountTypeCode).AsEnumerable(), new MemoryCacheEntryOptions
             {
@@ -157,12 +155,15 @@ namespace PE.Nominal.Intacct
 
         public async Task PostJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol, PerformContext performContext)
         {
+            throw new NotImplementedException();
+            /*
             var orgConfig = GetOrgConfig(Org);
             var example = lines.First();
             var desc = "Practice Engine Journal: (Batch #" + example.NomBatch + ")";
             var comment = orgConfig.CreateAsDraft ? "Draft Journal Created from Practice Engine" : "Journal Created from Practice Engine";
             var client = GetClient(Org);
             await this.SendJournalCmd(client, Org, lines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
+            */
         }
 
 
@@ -174,14 +175,8 @@ namespace PE.Nominal.Intacct
         /// <param name="JournalSymbol"></param>
         /// <returns></returns>
         public async Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext)
-        {
-            var orgConfig = GetOrgConfig(Org);
-            var example = lines.First();
-            var desc = "Practice Engine Stats Journal: (Batch #" + example.BatchID + ")";
-            var comment = orgConfig.CreateAsDraft ? "Draft STAT Journal Created from Practice Engine" : "STAT Journal Created from Practice Engine";
-            var client = GetClient(Org);
-            await this.SendStatHoursJournalCmd(client, Org, lines, example.BatchDate, example.BatchID.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
-
+        { 
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -197,8 +192,10 @@ namespace PE.Nominal.Intacct
         /// <param name="HistoryComment"></param>
         /// <param name="AsDraft"></param>
         /// <returns></returns>
-        private async Task SendJournalCmd(OnlineClient client, int Org, IEnumerable<JournalExtract> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
+        private async Task SendJournalCmd(IXeroCoreApi client, int Org, IEnumerable<JournalExtract> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
         {
+            throw new NotImplementedException();
+            /*
             JournalEntryCreate create = new JournalEntryCreate();
             create.JournalSymbol = JournalSymbol;
             create.ReferenceNumber = ReferenceNumber;
@@ -290,6 +287,7 @@ namespace PE.Nominal.Intacct
             {
                 result.EnsureStatusSuccess();
             }
+            */
         }
 
 
@@ -306,8 +304,10 @@ namespace PE.Nominal.Intacct
         /// <param name="HistoryComment"></param>
         /// <param name="AsDraft"></param>
         /// <returns></returns>
-        private async Task SendStatHoursJournalCmd(OnlineClient client, int Org, IEnumerable<IntacctStatHours> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
+        private async Task SendStatHoursJournalCmd(IXeroCoreApi client, int Org, IEnumerable<IntacctStatHours> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
         {
+            throw new NotImplementedException();
+            /*
             StatisticalJournalEntryCreate create = new StatisticalJournalEntryCreate();
             create.JournalSymbol = JournalSymbol;
             create.ReferenceNumber = ReferenceNumber;
@@ -400,6 +400,7 @@ namespace PE.Nominal.Intacct
             {
                 result.EnsureStatusSuccess();
             }
+            */
         }
 
 
@@ -408,50 +409,103 @@ namespace PE.Nominal.Intacct
         /// </summary>
         /// <param name="org"></param>
         /// <returns></returns>
-        private IntacctOrgConfig GetOrgCashConfig(int org)
+        private XeroOrgConfig GetOrgCashConfig(int org)
         {
             var orgConfig = _config.CashbookConfigs.FirstOrDefault(c => c.Org == org);
             if (orgConfig == null)
-                throw new Exception("No Intacct Cashbook Configuration found for Organization #" + org);
+                throw new Exception("No Xero Cashbook Configuration found for Organization #" + org);
 
             return orgConfig;
         }
 
         /// <summary>
-        /// Returns an Intacct Client Connected to the correct database for Cashbook Posting
+        /// Returns an Xero Client Connected to the correct database for Cashbook Posting
         /// </summary>
         /// <param name="org"></param>
         /// <returns></returns>
-        private OnlineClient GetCashClient(int org)
+        private IXeroCoreApi GetCashClient(int org)
         {
             var orgConfig = GetOrgCashConfig(org);
 
-            var intacctClient = new OnlineClient(new ClientConfig
-            {
-                SenderId = orgConfig.SenderID,
-                SenderPassword = orgConfig.SenderPassword,
-                CompanyId = orgConfig.CompanyID,
-                UserId = orgConfig.UserID,
-                UserPassword = orgConfig.UserPassword
-            });
+            var xeroClient = new XeroCoreApi(orgConfig.XeroURL, new PrivateAuthenticator(orgConfig.XeroCertPath),
+                new Consumer(orgConfig.SenderID, orgConfig.SenderPassword));
 
-            return intacctClient;
+            return xeroClient;
         }
 
 
         public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol, PerformContext performContext)
         {
+            throw new NotImplementedException();
+            /*
             var orgConfig = GetOrgCashConfig(Org);
             var example = lines.First();
             var desc = "Practice Engine Cash Journal: (Batch #" + example.NomBatch + ")";
             var comment = orgConfig.CreateAsDraft ? "Draft Journal Created from Practice Engine" : "Journal Created from Practice Engine";
             var client = GetCashClient(Org);
             await this.SendJournalCmd(client, Org, lines, example.NomDate, example.NomBatch.ToString(), JournalSymbol, desc, comment, orgConfig.CreateAsDraft);
+            */
         }
 
         public async Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext)
         {
-            throw new NotImplementedException();
+            var orgConfig = GetOrgCashConfig(Org);
+
+            var xeroClient = GetClient(Org);
+
+            var xeroContacts = await xeroClient.Contacts.FindAsync();
+
+            var newContacts = new List<Xero.Api.Core.Model.Contact>();
+            var updatedContacts = new List<Xero.Api.Core.Model.Contact>();
+
+            foreach (var client in clients)
+            {
+                var cont = xeroContacts.Where(c => c.ContactNumber == client.ClientCode || c.Id.ToString() == client.GLClientID);
+                if (cont.Count() == 0)
+                {
+                    // New Contact in Xero
+                    Xero.Api.Core.Model.Contact newcontact = new Xero.Api.Core.Model.Contact();
+                    newcontact.ContactNumber = client.ClientCode;
+                    newcontact.Name = client.ClientName;
+                    newcontact.IsCustomer = true;
+                    var address = new Xero.Api.Core.Model.Address();
+                    address.AddressLine1 = client.Address;
+                    address.City = client.TownCity;
+                    address.Region = client.County;
+                    address.Country = client.Country;
+                    address.PostalCode = client.PostCode;
+                    newcontact.Addresses = new List<Xero.Api.Core.Model.Address>();
+                    newcontact.Addresses.Add(address);
+                    newcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
+
+                    newContacts.Add(newcontact);
+                }
+                else
+                {
+                    // Update Contact in Xero
+                    Xero.Api.Core.Model.Contact existingcontact = cont.First();
+                    existingcontact.ContactNumber = client.ClientCode;
+                    existingcontact.Name = client.ClientName;
+                    existingcontact.IsCustomer = true;
+                    var address = new Xero.Api.Core.Model.Address();
+                    address.AddressLine1 = client.Address;
+                    address.City = client.TownCity;
+                    address.Region = client.County;
+                    address.Country = client.Country;
+                    address.PostalCode = client.PostCode;
+                    existingcontact.Addresses = new List<Xero.Api.Core.Model.Address>();
+                    existingcontact.Addresses.Add(address);
+                    existingcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
+
+                    updatedContacts.Add(existingcontact);
+                }
+            }
+
+            var createResponse = await xeroClient.Contacts.CreateAsync(newContacts);
+
+            var updateResponse = await xeroClient.Contacts.UpdateAsync(updatedContacts);
+
+
         }
     }
 }
