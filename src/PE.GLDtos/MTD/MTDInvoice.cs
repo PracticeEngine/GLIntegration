@@ -13,14 +13,16 @@ namespace PE.Nominal
 
         public string Address { get; set; }
 
-        public DateTime InvoiceDate { get; set; }
+        public string DebtTranRefAlpha { get; set; }
 
-        public decimal InvoiceNet { get; set; }
+        public int DebtTranRefNum { get; set; }
 
-        public decimal InvoiceVAT { get; set; }
+        public DateTime DebtTranDate { get; set; }
+
+        public decimal DebtTranAmount { get; set; }
+
+        public decimal DebtTranVAT { get; set; }
 
         public IEnumerable<MTDLineItem> Lines { get; set; }
-
-        public MTDClient Client { get; set; }
     }
 }

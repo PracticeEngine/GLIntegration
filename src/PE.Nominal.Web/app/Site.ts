@@ -261,6 +261,7 @@
         mapping: boolean;
         posting: boolean;
         bankrec: boolean;
+        mtd: boolean;
         constructor() {
             console.info("Home");
             super();
@@ -269,6 +270,7 @@
             this.mapping = this.hasAccess("MissingMap");
             this.posting = this.hasAccess("Journal");
             this.bankrec = this.hasAccess("BankRec");
+            this.mtd = this.hasAccess("MTD");
         }
 
     }

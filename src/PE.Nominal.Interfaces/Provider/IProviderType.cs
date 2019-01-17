@@ -51,13 +51,13 @@ namespace PE.Nominal.Provider
         Task PostStatHourJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, string JournalSymbol, PerformContext performContext);
 
         /// <summary>
-        /// Implemented for MTDct to post Sales Data
+        /// Implemented for MTD to post Sales Data
         /// </summary>
         /// <param name="Org"></param>
         /// <param name="clients"></param>
         /// <param name="invoices"></param>
         /// <param name="lines"></param>
         /// <returns></returns>
-        Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext);
+        Task<IEnumerable<int>> PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, PerformContext performContext);
     }
 }

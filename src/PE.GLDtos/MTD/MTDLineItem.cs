@@ -23,5 +23,10 @@ namespace PE.Nominal
         /// Line VAT Amount
         /// </summary>
         public decimal VATAmount { get; set; }
+
+        /// <summary>
+        /// Line Description
+        /// </summary>
+        public string Description { get; set; }
     }
 }

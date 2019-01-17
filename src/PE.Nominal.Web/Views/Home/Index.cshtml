@@ -16,6 +16,7 @@
                         <a href="#" data-bind="visible:mapping,click:showPage.bind($data,'MissingMap')" class="list-group-item">Missing Mappings</a>
                         <a href="#" data-bind="visible:posting,click:showPage.bind($data,'Journal')" class="list-group-item">Journal Posting</a>
                         <a href="#" data-bind="visible:bankrec,click:showPage.bind($data,'BankRec')" class="list-group-item">Update Bank Rec</a>
+                        <a href="#" data-bind="visible:mtd,click:showPage.bind($data,'MTD')" class="list-group-item">Making Tax Digital</a>
                     </div>
                 </div>
             </div>
@@ -692,7 +693,6 @@
                 <div class="panel-footer text-right">
                     <button class="btn btn-default" data-bind="click:goHome">Close</button>
                     <button class="btn btn-primary" data-bind="click:run">Sync</button>
-                    <a href="~/hangfire" target="_blank" class="btn btn-info">Hangfire Dashboard</a>
                 </div>
             </div>
         </div>

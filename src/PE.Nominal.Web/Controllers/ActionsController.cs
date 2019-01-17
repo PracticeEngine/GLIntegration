@@ -26,13 +26,15 @@ namespace PE.Nominal.Web.Controllers
         private readonly ILogger _logger;
         private readonly ViewOptions _options;
         private readonly ActionsService _actionService;
+        private readonly MTDService _mtdService;
         private readonly IProviderType _glProvider;
         private readonly JournalOptions _journalOptions;
 
-        public ActionsController(ILogger<ActionsController> logger, ActionsService actionService, IProviderType glProvider, IOptions<ViewOptions> options, IOptions<JournalOptions> journalOptions)
+        public ActionsController(ILogger<ActionsController> logger, ActionsService actionService, MTDService mtdService, IProviderType glProvider, IOptions<ViewOptions> options, IOptions<JournalOptions> journalOptions)
         {
             _logger = logger;
             _actionService = actionService;
+            _mtdService = mtdService;
             _glProvider = glProvider;
             _options = options.Value;
             _journalOptions = journalOptions.Value;
@@ -851,42 +853,63 @@ namespace PE.Nominal.Web.Controllers
             var toTransfer = orgList.Where(o => o.NLTransfer);
             var hangfireJobId = context.BackgroundJob.Id;
             List<string> errors = new List<string>();
+
+            try
+            {
+                await _mtdService.ExtractMTDCmd();
+            }
+            catch (SystemException ex)
+            {
+                context.WriteLine($"MTD Extract failed to run due to {ex.Message}\n\n" + ex.StackTrace);
+            }
+
             foreach (var org in toTransfer)
             {
                 try
                 {
-                    // Added Loop for Multiple-Journal Posting Process
-                    foreach (var Journal in _journalOptions.IntacctHourJournals)
+                    try
                     {
-                        try
-                        {
-                            var lines = await _actionService.ExtractIntacctHoursJournalQuery(org.PracID, Journal: Journal, HangfireJobId: hangfireJobId);
+                        var clients = await _mtdService.MTDClientsQuery(org.PracID);
+                        var invoices = await _mtdService.MTDInvoicesQuery(org.PracID);
 
-                            if (lines == null || lines.Count() == 0)
-                                continue;
+                        context.WriteLine($"Preparing to sync MTD data for organisation {org.PracName}.");
 
-                            await _glProvider.PostStatHourJournalCmd(org.PracID, lines, Journal, context);
-                            await _actionService.FlagTransferredCmd(org.PracID, Journal, hangfireJobId);
-                        }
-                        catch (Exception ex)
+                        var processedInvoices = await _glProvider.PostMTDCmd(org.PracID, clients, invoices, context);
+
+                        context.WriteLine($"Finished syncing MTD data for organisation {org.PracName}.");
+
+                        await _mtdService.MTDFlagAsProcessedCmd(processedInvoices);
+
+                        switch (processedInvoices.Count())
                         {
-                            await _actionService.UnFlagTransferredCmd(org.PracID, Journal, hangfireJobId);
-                            throw ex;
+                            case 0:
+                                context.WriteLine($"NO invoices processed for organisation {org.PracName}.");
+                                break;
+                            case 1:
+                                context.WriteLine($"Finished marking 1 invoice as processed for organisation {org.PracName}.");
+                                break;
+                            default:
+                                context.WriteLine($"Finished marking {processedInvoices.Count()} invoices as processed for organisation {org.PracName}.");
+                                break;
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
                     }
                 }
                 catch (ResultException re)
                 {
-                    context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                    context.WriteLine($"MTD Errors during transfer of organisation {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
                 }
                 catch (AggregateException ax)
                 {
                     var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
-                    context.WriteLine($"The organization {org.PracName} failed to transfer due to:\n\t{msgs}");
+                    context.WriteLine($"The organisation {org.PracName} failed to transfer due to:\n\t{msgs}");
                 }
                 catch (Exception ex)
                 {
-                    context.WriteLine($"The organization {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                    context.WriteLine($"The organisation {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
                 }
             }
         }

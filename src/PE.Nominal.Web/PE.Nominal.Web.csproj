@@ -39,6 +39,7 @@
     <ProjectReference Include="..\PE.Nominal.Intacct\PE.Nominal.Intacct.csproj" />
     <ProjectReference Include="..\PE.Nominal.Services\PE.Nominal.Services.csproj" />
     <ProjectReference Include="..\PE.Nominal.Sql\PE.Nominal.Sql.csproj" />
+    <ProjectReference Include="..\PE.Nominal.Xero\PE.Nominal.Xero.csproj" />
   </ItemGroup>
 
   <ItemGroup>

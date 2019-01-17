@@ -268,6 +268,7 @@ var PE;
                 _this.mapping = _this.hasAccess("MissingMap");
                 _this.posting = _this.hasAccess("Journal");
                 _this.bankrec = _this.hasAccess("BankRec");
+                _this.mtd = _this.hasAccess("MTD");
                 return _this;
             }
             return Home;

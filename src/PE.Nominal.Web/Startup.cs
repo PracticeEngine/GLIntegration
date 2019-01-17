@@ -81,6 +81,9 @@ namespace PE.Nominal.Web
                 case "intacct":
                     services.AddIntacctGLProvider(Configuration);
                     break;
+                case "xero":
+                    services.AddXeroGLProvider(Configuration);
+                    break;
                 default:
                     services.AddSqlGLProvider(Configuration);
                     break;

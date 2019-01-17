@@ -20,6 +20,7 @@ namespace PE.Nominal
         public static void AddNominalLedgerServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddTransient<ActionsService>();
+            services.AddTransient<MTDService>();
             services.AddTransient<LoginService>();
             services.AddTransient<PageService>();
             services.Configure<LoginOptions>(config.GetSection("PEAuth"));

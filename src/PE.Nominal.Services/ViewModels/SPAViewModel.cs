@@ -20,5 +20,6 @@ namespace PE.Nominal.ViewModels
 
         public bool IntacctHrsJournal { get; set; }
 
+        public bool MTDAvailable { get; set; }
     }
 }

@@ -16,6 +16,7 @@ namespace PE.Nominal
             services.AddTransient<MenuDAL>();
             services.AddTransient<IntacctDAL>();
             services.AddTransient<NominalDAL>();
+            services.AddTransient<MTDDAL>();
 
         }
     }

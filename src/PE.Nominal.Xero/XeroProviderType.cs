@@ -1,4 +1,5 @@
-﻿using Hangfire.Server;
+﻿using Hangfire.Console;
+using Hangfire.Server;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -447,28 +448,56 @@ namespace PE.Nominal.XeroGL
             */
         }
 
-        public async Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext)
+        public async Task<IEnumerable<int>> PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, PerformContext performContext)
         {
-            var orgConfig = GetOrgCashConfig(Org);
+            List<int> processedInvoices = new List<int>();
+
+            var orgConfig = GetOrgConfig(Org);
 
             var xeroClient = GetClient(Org);
 
-            var xeroContacts = await xeroClient.Contacts.FindAsync();
+            var xeroContacts = new List<Xero.Api.Core.Model.Contact>();
+            bool moreContacts = true;
+            int currentContactPage = 1;
+
+            while (moreContacts)
+            {
+                var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
+                if (pagedContacts != null && pagedContacts.Count() > 0)
+                {
+                    xeroContacts.AddRange(pagedContacts);
+}
+                else
+                {
+                    moreContacts = false;
+                }
+            }
+
+            performContext.WriteLine(ConsoleTextColor.White, $"Received list of {xeroContacts.Count()} Xero Contacts.");
 
             var newContacts = new List<Xero.Api.Core.Model.Contact>();
             var updatedContacts = new List<Xero.Api.Core.Model.Contact>();
 
+            int newCount = 0;
+            int updateCount = 0;
+            int totalSent = 0;
+            int totalClients = clients.Count();
+            bool ErrorsAddingClients = false;
+            bool ClientsAdded = false;
+
             foreach (var client in clients)
             {
-                var cont = xeroContacts.Where(c => c.ContactNumber == client.ClientCode || c.Id.ToString() == client.GLClientID);
+                var cont = xeroContacts.Where(c => c.ContactNumber == client.ContIndex.ToString());
                 if (cont.Count() == 0)
                 {
                     // New Contact in Xero
                     Xero.Api.Core.Model.Contact newcontact = new Xero.Api.Core.Model.Contact();
-                    newcontact.ContactNumber = client.ClientCode;
-                    newcontact.Name = client.ClientName;
+                    newcontact.AccountNumber = client.ClientCode;
+                    newcontact.ContactNumber = client.ContIndex.ToString();
+                    newcontact.Name = client.ClientName + " (PE Client: " + client.ClientCode + ")";
                     newcontact.IsCustomer = true;
                     var address = new Xero.Api.Core.Model.Address();
+                    address.AddressType = Xero.Api.Core.Model.Types.AddressType.PostOfficeBox;
                     address.AddressLine1 = client.Address;
                     address.City = client.TownCity;
                     address.Region = client.County;
@@ -479,15 +508,18 @@ namespace PE.Nominal.XeroGL
                     newcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
 
                     newContacts.Add(newcontact);
+                    newCount++;
                 }
                 else
                 {
                     // Update Contact in Xero
                     Xero.Api.Core.Model.Contact existingcontact = cont.First();
-                    existingcontact.ContactNumber = client.ClientCode;
-                    existingcontact.Name = client.ClientName;
+                    existingcontact.AccountNumber = client.ClientCode;
+                    existingcontact.ContactNumber = client.ContIndex.ToString();
+                    existingcontact.Name = client.ClientName + " (PE Client: " + client.ClientCode + ")";
                     existingcontact.IsCustomer = true;
                     var address = new Xero.Api.Core.Model.Address();
+                    address.AddressType = Xero.Api.Core.Model.Types.AddressType.PostOfficeBox;
                     address.AddressLine1 = client.Address;
                     address.City = client.TownCity;
                     address.Region = client.County;
@@ -498,14 +530,210 @@ namespace PE.Nominal.XeroGL
                     existingcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
 
                     updatedContacts.Add(existingcontact);
+                    updateCount++;
+                }
+
+                if (newCount > 49)
+                {
+                    totalSent = totalSent + 50;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 new Clients to Xero. Sent {totalSent} of {totalClients}");
+
+                    var createResponse = await xeroClient.Contacts.SummarizeErrors(false).CreateAsync(newContacts);
+
+                    foreach (var newresponse in createResponse)
+                    {
+                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        {
+                            ErrorsAddingClients = true;
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.Errors.First().Message}");
+                        }
+                    }
+
+                    newCount = 0;
+                    newContacts = new List<Xero.Api.Core.Model.Contact>();
+                    ClientsAdded = true;
+                }
+
+                if (updateCount > 49)
+                {
+                    totalSent = totalSent + 50;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 existing Clients to update in Xero. Sent {totalSent} of {totalClients}");
+
+                    var updateResponse = await xeroClient.Contacts.SummarizeErrors(false).UpdateAsync(updatedContacts);
+
+                    foreach (var newresponse in updateResponse)
+                    {
+                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        {
+                            ErrorsAddingClients = true;
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.Errors.First().Message}");
+                        }
+                    }
+                    updateCount = 0;
+                    updatedContacts = new List<Xero.Api.Core.Model.Contact>();
                 }
             }
 
-            var createResponse = await xeroClient.Contacts.CreateAsync(newContacts);
+            if (newCount > 0)
+            {
+                if (newCount == 1)
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last new Client to Xero.");
+                }
+                else
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last {newCount} new Clients to Xero.");
+                }
+                
+                var createResponse = await xeroClient.Contacts.SummarizeErrors(false).CreateAsync(newContacts);
 
-            var updateResponse = await xeroClient.Contacts.UpdateAsync(updatedContacts);
+                foreach(var newresponse in createResponse)
+                {
+                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    {
+                        ErrorsAddingClients = true;
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.Errors.First().Message}");
+                    }
+                }
+                ClientsAdded = true;
+            }
 
+            if (ErrorsAddingClients)
+            {
+                return processedInvoices;
+            }
 
+            if (updateCount > 0)
+            {
+                if (updateCount == 1)
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last Client update to Xero.");
+                }
+                else
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last {updateCount} Client updates to Xero.");
+                }
+
+                var updateResponse = await xeroClient.Contacts.SummarizeErrors(false).UpdateAsync(updatedContacts);
+
+                foreach (var newresponse in updateResponse)
+                {
+                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    {
+                        ErrorsAddingClients = true;
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.Errors.First().Message}");
+                    }
+                }
+            }
+
+            if (ClientsAdded)
+            {
+                xeroContacts = new List<Xero.Api.Core.Model.Contact>();
+                moreContacts = true;
+                currentContactPage = 1;
+
+                while (moreContacts)
+                {
+                    var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
+                    if (pagedContacts != null && pagedContacts.Count() > 0)
+                    {
+                        xeroContacts.AddRange(pagedContacts);
+                    }
+                    else
+                    {
+                        moreContacts = false;
+                    }
+                }
+
+                performContext.WriteLine(ConsoleTextColor.White, $"New Clients added. Received new list of {xeroContacts.Count()} Xero Contacts.");
+            }
+
+            var xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
+            int invCount = 0;
+            totalSent = 0;
+            int totalInvoices = invoices.Count();
+
+            foreach (var inv in invoices)
+            {
+                var xeroInv = new Xero.Api.Core.Model.Invoice();
+
+                xeroInv.Type = Xero.Api.Core.Model.Types.InvoiceType.AccountsReceivable;
+                xeroInv.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
+                xeroInv.Reference = inv.DebtTranRefAlpha;
+                xeroInv.Number = inv.DebtTranIndex.ToString();
+
+                var contact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
+                xeroInv.Contact = contact;
+                xeroInv.Date = inv.DebtTranDate;
+                xeroInv.DueDate = inv.DebtTranDate;
+                xeroInv.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
+                xeroInv.LineItems = new List<Xero.Api.Core.Model.LineItem>();
+
+                foreach (var line in inv.Lines)
+                {
+                    var xeroLine = new Xero.Api.Core.Model.LineItem();
+
+                    xeroLine.Description = line.Description;
+                    xeroLine.LineAmount = line.Amount;
+                    xeroLine.TaxAmount = line.VATAmount;
+                    xeroLine.TaxType = (line.VATAmount == 0 ? "NONE" : "OUTPUT2");
+                    xeroLine.AccountCode = "200";
+
+                    xeroInv.LineItems.Add(xeroLine);
+                }
+
+                xeroInvoices.Add(xeroInv);
+
+                invCount++;
+                if (invCount > 49)
+                {
+                    totalSent = totalSent + 50;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 invoices to Xero. Sent {totalSent} of {totalInvoices}");
+
+                    var invoiceResponse = await xeroClient.Invoices.SummarizeErrors(false).CreateAsync(xeroInvoices);
+
+                    foreach (var newresponse in invoiceResponse)
+                    {
+                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                        }
+                        else
+                        {
+                            processedInvoices.Add(Int32.Parse(newresponse.Number));
+                        }
+                    }
+                    invCount = 0;
+                    xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
+                }
+            }
+            if (invCount > 0)
+            {
+                if (invCount == 1)
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last invoice to Xero.");
+                }
+                else
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last {invCount} invoices to Xero.");
+                }
+
+                var invoiceResponse = await xeroClient.Invoices.SummarizeErrors(false).CreateAsync(xeroInvoices);
+
+                foreach (var newresponse in invoiceResponse)
+                {
+                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                    }
+                    else
+                    {
+                        processedInvoices.Add(Int32.Parse(newresponse.Number));
+                    }
+                }
+            }
+
+            return processedInvoices;
         }
     }
 }

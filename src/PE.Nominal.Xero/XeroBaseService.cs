@@ -10,6 +10,7 @@ using Xero.Api.Core;
 using Xero.Api.Infrastructure.Authenticators;
 using Xero.Api.Infrastructure.Interfaces;
 using Xero.Api.Infrastructure.OAuth;
+using Xero.Api.Infrastructure.RateLimiter;
 
 namespace PE.Nominal.XeroGL
 {
@@ -56,7 +57,7 @@ namespace PE.Nominal.XeroGL
             var orgConfig = GetOrgConfig(Org);
 
             return new XeroCoreApi(orgConfig.XeroURL, new PrivateAuthenticator(orgConfig.XeroCertPath),
-                new Consumer(orgConfig.SenderID, orgConfig.SenderPassword));
+                new Consumer(orgConfig.SenderID, orgConfig.SenderPassword), null, new RateLimiter(TimeSpan.FromMinutes(1), 50));
 /*
             return new XeroCoreApi("https://api.xero.com", new PrivateAuthenticator(@"C:\Program Files\OpenSSL-Win64\bin\xero_pekey.pfx"),
                 new Consumer("MFVXVWJY61DA8ZEKXNDDL8CQRYGLHS", "1HBYQBFVQWERWLOIVJ3OJWJFPGJVCH"));
