@@ -883,13 +883,13 @@ namespace PE.Nominal.Web.Controllers
                         switch (processedInvoices.Count())
                         {
                             case 0:
-                                context.WriteLine($"NO invoices processed for organisation {org.PracName}.");
+                                context.WriteLine($"NO entries processed for organisation {org.PracName}.");
                                 break;
                             case 1:
-                                context.WriteLine($"Finished marking 1 invoice as processed for organisation {org.PracName}.");
+                                context.WriteLine($"Finished marking 1 entry as processed for organisation {org.PracName}.");
                                 break;
                             default:
-                                context.WriteLine($"Finished marking {processedInvoices.Count()} invoices as processed for organisation {org.PracName}.");
+                                context.WriteLine($"Finished marking {processedInvoices.Count()} entries as processed for organisation {org.PracName}.");
                                 break;
                         }
                     }

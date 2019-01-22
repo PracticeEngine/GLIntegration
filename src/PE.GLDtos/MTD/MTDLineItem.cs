@@ -28,5 +28,15 @@ namespace PE.Nominal
         /// Line Description
         /// </summary>
         public string Description { get; set; }
+
+        /// <summary>
+        /// Tax Code
+        /// </summary>
+        public string TaxCode { get; set; }
+
+        /// <summary>
+        /// Sales Account Code
+        /// </summary>
+        public string AccountCode { get; set; }
     }
 }

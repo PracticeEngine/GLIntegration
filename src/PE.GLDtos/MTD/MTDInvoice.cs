@@ -9,6 +9,8 @@ namespace PE.Nominal
     {
         public int DebtTranIndex { get; set; }
 
+        public int DebtTranType { get; set; }
+
         public int ContIndex { get; set; }
 
         public string Address { get; set; }

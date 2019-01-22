@@ -649,42 +649,83 @@ namespace PE.Nominal.XeroGL
             }
 
             var xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
+            var xeroCreditNotes = new List<Xero.Api.Core.Model.CreditNote>();
             int invCount = 0;
+            int cnCount = 0;
             totalSent = 0;
             int totalInvoices = invoices.Count();
 
             foreach (var inv in invoices)
             {
-                var xeroInv = new Xero.Api.Core.Model.Invoice();
+                switch (inv.DebtTranType) {
+                    case 3:
+                    case 4:
+                        var xeroInv = new Xero.Api.Core.Model.Invoice();
 
-                xeroInv.Type = Xero.Api.Core.Model.Types.InvoiceType.AccountsReceivable;
-                xeroInv.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
-                xeroInv.Reference = inv.DebtTranRefAlpha;
-                xeroInv.Number = inv.DebtTranIndex.ToString();
+                        xeroInv.Type = Xero.Api.Core.Model.Types.InvoiceType.AccountsReceivable;
+                        xeroInv.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
+                        xeroInv.Reference = inv.DebtTranRefAlpha;
+                        xeroInv.Number = inv.DebtTranIndex.ToString();
 
-                var contact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
-                xeroInv.Contact = contact;
-                xeroInv.Date = inv.DebtTranDate;
-                xeroInv.DueDate = inv.DebtTranDate;
-                xeroInv.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
-                xeroInv.LineItems = new List<Xero.Api.Core.Model.LineItem>();
+                        var contact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
+                        xeroInv.Contact = contact;
+                        xeroInv.Date = inv.DebtTranDate;
+                        xeroInv.DueDate = inv.DebtTranDate;
+                        xeroInv.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
+                        xeroInv.LineItems = new List<Xero.Api.Core.Model.LineItem>();
 
-                foreach (var line in inv.Lines)
-                {
-                    var xeroLine = new Xero.Api.Core.Model.LineItem();
+                        foreach (var line in inv.Lines)
+                        {
+                            var xeroLine = new Xero.Api.Core.Model.LineItem();
 
-                    xeroLine.Description = line.Description;
-                    xeroLine.LineAmount = line.Amount;
-                    xeroLine.TaxAmount = line.VATAmount;
-                    xeroLine.TaxType = (line.VATAmount == 0 ? "NONE" : "OUTPUT2");
-                    xeroLine.AccountCode = "200";
+                            xeroLine.Description = line.Description;
+                            xeroLine.LineAmount = line.Amount;
+                            xeroLine.TaxAmount = line.VATAmount;
+                            xeroLine.TaxType = line.TaxCode;
+                            xeroLine.AccountCode = line.AccountCode;
 
-                    xeroInv.LineItems.Add(xeroLine);
+                            xeroInv.LineItems.Add(xeroLine);
+                        }
+
+                        xeroInvoices.Add(xeroInv);
+
+                        invCount++;
+                        break;
+                    case 6:
+                    case 14:
+                        var xeroCn = new Xero.Api.Core.Model.CreditNote();
+
+                        xeroCn.Type = Xero.Api.Core.Model.Types.CreditNoteType.AccountsReceivable;
+                        xeroCn.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
+                        xeroCn.Reference = inv.DebtTranRefAlpha;
+                        xeroCn.Number = inv.DebtTranIndex.ToString();
+
+                        var cncontact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
+                        xeroCn.Contact = cncontact;
+                        xeroCn.Date = inv.DebtTranDate;
+                        xeroCn.DueDate = inv.DebtTranDate;
+                        xeroCn.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
+                        xeroCn.LineItems = new List<Xero.Api.Core.Model.LineItem>();
+
+                        foreach (var line in inv.Lines)
+                        {
+                            var xeroLine = new Xero.Api.Core.Model.LineItem();
+
+                            xeroLine.Description = line.Description;
+                            xeroLine.LineAmount = line.Amount * -1;
+                            xeroLine.TaxAmount = line.VATAmount * -1;
+                            xeroLine.TaxType = line.TaxCode;
+                            xeroLine.AccountCode = line.AccountCode;
+
+                            xeroCn.LineItems.Add(xeroLine);
+                        }
+
+                        xeroCreditNotes.Add(xeroCn);
+
+                        cnCount++;
+                        break;
                 }
 
-                xeroInvoices.Add(xeroInv);
-
-                invCount++;
                 if (invCount > 49)
                 {
                     totalSent = totalSent + 50;
@@ -706,6 +747,28 @@ namespace PE.Nominal.XeroGL
                     invCount = 0;
                     xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
                 }
+
+                if (cnCount > 49)
+                {
+                    totalSent = totalSent + 50;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 credit notes to Xero. Sent {totalSent} of {totalInvoices}");
+
+                    var cnResponse = await xeroClient.CreditNotes.SummarizeErrors(false).CreateAsync(xeroCreditNotes);
+
+                    foreach (var newresponse in cnResponse)
+                    {
+                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                        }
+                        else
+                        {
+                            processedInvoices.Add(Int32.Parse(newresponse.Number));
+                        }
+                    }
+                    cnCount = 0;
+                    xeroCreditNotes = new List<Xero.Api.Core.Model.CreditNote>();
+                }
             }
             if (invCount > 0)
             {
@@ -725,6 +788,31 @@ namespace PE.Nominal.XeroGL
                     if (newresponse.Errors != null && newresponse.Errors.Count > 0)
                     {
                         performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                    }
+                    else
+                    {
+                        processedInvoices.Add(Int32.Parse(newresponse.Number));
+                    }
+                }
+            }
+            if (cnCount > 0)
+            {
+                if (cnCount == 1)
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last credit note to Xero.");
+                }
+                else
+                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Sending last {cnCount} credit notes to Xero.");
+                }
+
+                var cnResponse = await xeroClient.CreditNotes.SummarizeErrors(false).CreateAsync(xeroCreditNotes);
+
+                foreach (var newresponse in cnResponse)
+                {
+                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
                     }
                     else
                     {
