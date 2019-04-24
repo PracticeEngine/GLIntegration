@@ -670,7 +670,7 @@ namespace PE.Nominal.XeroGL
                         var contact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
                         xeroInv.Contact = contact;
                         xeroInv.Date = inv.DebtTranDate;
-                        xeroInv.DueDate = inv.DebtTranDate;
+                        xeroInv.DueDate = inv.DueDate;
                         xeroInv.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
                         xeroInv.LineItems = new List<Xero.Api.Core.Model.LineItem>();
 
@@ -703,7 +703,7 @@ namespace PE.Nominal.XeroGL
                         var cncontact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
                         xeroCn.Contact = cncontact;
                         xeroCn.Date = inv.DebtTranDate;
-                        xeroCn.DueDate = inv.DebtTranDate;
+                        xeroCn.DueDate = inv.DueDate;
                         xeroCn.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
                         xeroCn.LineItems = new List<Xero.Api.Core.Model.LineItem>();
 

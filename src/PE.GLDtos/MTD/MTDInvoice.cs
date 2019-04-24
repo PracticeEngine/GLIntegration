@@ -21,6 +21,8 @@ namespace PE.Nominal
 
         public DateTime DebtTranDate { get; set; }
 
+        public DateTime DueDate { get; set; }
+
         public decimal DebtTranAmount { get; set; }
 
         public decimal DebtTranVAT { get; set; }
