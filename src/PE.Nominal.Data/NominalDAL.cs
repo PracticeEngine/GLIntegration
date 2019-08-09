@@ -108,6 +108,17 @@ namespace PE.Nominal
 
         }
 
+        public async Task ExtractExpensesCmd()
+        {
+            var result = new SqlParameter("@Result", System.Data.SqlDbType.Int)
+            {
+                Direction = System.Data.ParameterDirection.Output
+            };
+
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_EXP @Result", result).ConfigureAwait(false);
+
+        }
+
         public async Task<IEnumerable<PostPeriods>> PostPeriodsQuery()
         {
             var results = await context.Database.SqlQueryAsync<PostPeriods>("pe_NL_Post_Periods").ConfigureAwait(false);
@@ -219,6 +230,17 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<CashbookRepostBatch>("pe_NL_Cashbook_List {0}", NomPeriodIndex).ConfigureAwait(false);
             return results;
         }
-        
+
+        public async Task<IEnumerable<ExpenseStaff>> ExpenseStaffQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseStaff>("pe_NL_Expense_Staff").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<ExpenseLines>> ExpenseLinesQuery(int ExpOrg, int ExpStaff)
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseLines>("pe_NL_Expense_Lines {0}, {1}", ExpOrg, ExpStaff).ConfigureAwait(false);
+            return results;
+        }
     }
 }

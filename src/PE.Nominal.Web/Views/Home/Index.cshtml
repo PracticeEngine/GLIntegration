@@ -16,6 +16,7 @@
                         <a href="#" data-bind="visible:mapping,click:showPage.bind($data,'MissingMap')" class="list-group-item">Missing Mappings</a>
                         <a href="#" data-bind="visible:posting,click:showPage.bind($data,'Journal')" class="list-group-item">Journal Posting</a>
                         <a href="#" data-bind="visible:bankrec,click:showPage.bind($data,'BankRec')" class="list-group-item">Update Bank Rec</a>
+                        <a href="#" data-bind="visible:bankrec,click:showPage.bind($data,'ExpensePost')" class="list-group-item">Expense Posting</a>
                         <a href="#" data-bind="visible:mtd,click:showPage.bind($data,'MTD')" class="list-group-item">Making Tax Digital</a>
                     </div>
                 </div>
@@ -693,6 +694,35 @@
                 <div class="panel-footer text-right">
                     <button class="btn btn-default" data-bind="click:goHome">Close</button>
                     <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-ExpensePost">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Expense Posting
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
+                                <div>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-primary" data-bind="enable:noMissingData, click:transfer">Transfer</button>
                 </div>
             </div>
         </div>

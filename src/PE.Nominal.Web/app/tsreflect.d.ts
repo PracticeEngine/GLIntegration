@@ -193,7 +193,28 @@ declare module PE.Nominal {
 	interface ISelectedDates {
 		PracPeriodStart: string | null;
 		PracPeriodEnd: string | null;
-	}
+    }
+    interface IExpenseStaff {
+        StaffOrg: number;
+        OrgName: string | null;
+        StaffIndex: number;
+        StaffName: string | null;
+        NumBlank: number;
+    }
+    interface IExpenseLines {
+        NumBlank: number;
+        NomExpIndex: number;
+        PeriodIndex: number;
+        ExpOrg: number;
+        DisbCode: string | null;
+        OrgName: string | null;
+        DisbName: string | null;
+        PostAcc: string | null;
+        ExpDate: string | null;
+        Amount: number;
+        VATAmount: number;
+        Description: string | null;
+    }
 }
 declare module PE.Nominal.Intacct {
 	interface IIntacctCustomer {
@@ -254,5 +275,5 @@ declare module PE.Nominal.Intacct {
 		IntacctCustomerID: string | null;
 		IntacctDepartment: string | null;
 		IntacctLocation: string | null;
-	}
+    }
 }

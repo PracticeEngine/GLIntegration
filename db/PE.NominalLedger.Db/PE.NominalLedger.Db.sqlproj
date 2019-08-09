@@ -195,6 +195,12 @@
     <Build Include="Stored Procedures\MTD\pe_NL_MTD_Export_Invoice_Lines.sql" />
     <Build Include="Tables\tblTranNominalMTDControl.sql" />
     <Build Include="Stored Procedures\MTD\pe_NL_MTD_Mark_As_Processed.sql" />
+    <Build Include="Stored Procedures\pe_NL_EXP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Suppliers_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Suppliers.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Expense_Post_AD.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Staff.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Lines.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">

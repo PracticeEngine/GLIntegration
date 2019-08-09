@@ -269,6 +269,7 @@ var PE;
                 _this.posting = _this.hasAccess("Journal");
                 _this.bankrec = _this.hasAccess("BankRec");
                 _this.mtd = _this.hasAccess("MTD");
+                _this.expense = _this.hasAccess("ExpensePost");
                 return _this;
             }
             return Home;
@@ -1461,6 +1462,165 @@ var PE;
             return MTD;
         }(BaseVM));
         Nominal.MTD = MTD;
+        var ExpensePost = (function (_super) {
+            __extends(ExpensePost, _super);
+            function ExpensePost() {
+                var _this = this;
+                console.info("ExpensePost");
+                _this = _super.call(this, false) || this;
+                _this.children = ko.observableArray([]);
+                _this.selectedItem = ko.observable(undefined);
+                _this.noMissingData = ko.observable(false);
+                _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
+                    if (val && val.filter) {
+                        _this.loadItem(val);
+                    }
+                    else {
+                        if (_this.table) {
+                            $("#gltable").DataTable().destroy();
+                            $("#gltable").empty();
+                            _this.table = null;
+                        }
+                    }
+                }));
+                _this.init();
+                return _this;
+            }
+            ExpensePost.prototype.toggleItem = function (item) {
+                if (item) {
+                    item.expanded(!item.expanded());
+                }
+            };
+            ExpensePost.prototype.loadItem = function (item) {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Staff...");
+                                return [4, this.ajaxSendReceive("api/Actions/ExpenseLines", item.group)];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.ExpDate,
+                                            item.Amount,
+                                            item.PostAcc,
+                                            item.ExpOrg,
+                                            item.Description,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        {
+                                            title: "Date",
+                                            render: function (val) {
+                                                return moment(val).format("MMM DD YYYY");
+                                            }
+                                        },
+                                        {
+                                            title: "Amount",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { title: "GL Account" },
+                                        { title: "Org" },
+                                        { title: "Description" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpensePost.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    function buildItem(from, level) {
+                        var x = {};
+                        for (var i = 0; i <= level; i++) {
+                            var fld = groups[i].unq;
+                            x[fld] = from[fld];
+                        }
+                        return x;
+                    }
+                    function buildGroups(grps, level) {
+                        if (level === void 0) { level = 0; }
+                        var grpSettings = groups[level];
+                        var distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                            return g[grpSettings.unq];
+                        }));
+                        return distValues.map(function (o) {
+                            var matches = grps.filter(function (g) {
+                                return g[grpSettings.unq] === o;
+                            });
+                            return {
+                                filter: grpSettings.filter,
+                                htmlSpace: "&nbsp;".repeat(level),
+                                title: matches[0][grpSettings.name].toString(),
+                                group: buildItem(matches[0], level),
+                                children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                                expanded: ko.observable(false)
+                            };
+                        });
+                    }
+                    var allGroups, groups;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Staff...");
+                                return [4, this.ajaxGet("api/Actions/ExpenseStaff")];
+                            case 1:
+                                allGroups = _a.sent();
+                                groups = [
+                                    { unq: "StaffOrg", name: "OrgName", filter: false },
+                                    { unq: "StaffIndex", name: "StaffName", filter: true }
+                                ];
+                                this.children(buildGroups(allGroups));
+                                if (allGroups.length > 0) {
+                                    this.noMissingData(allGroups[0].NumBlank == 0);
+                                }
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpensePost.prototype.transfer = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Submitting Expenses...");
+                                return [4, this.ajaxSendOnly("api/Actions/TransferExpenses", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Transfer has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+                                this.init();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExpensePost;
+        }(BaseVM));
+        Nominal.ExpensePost = ExpensePost;
     })(Nominal = PE.Nominal || (PE.Nominal = {}));
 })(PE || (PE = {}));
 ko.bindingHandlers.bsmodal = {

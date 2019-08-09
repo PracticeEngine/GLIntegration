@@ -77,6 +77,8 @@ namespace PE.Nominal
             hangfireContext.WriteLine("Starting pe_NL_LOD Stored Procedure");
             await nominalDAL.ExtractLodgementsCmd().ConfigureAwait(false);
 
+            hangfireContext.WriteLine("Starting pe_NL_EXP Stored Procedure");
+            await nominalDAL.ExtractExpensesCmd().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<PostPeriods>> PostPeriodsQuery()
@@ -197,5 +199,16 @@ namespace PE.Nominal
         {
             return await intacctDAL.IntacctEmployeesQuery().ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<ExpenseStaff>> ExpenseStaffQuery()
+        {
+            return await nominalDAL.ExpenseStaffQuery().ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<ExpenseLines>> ExpenseLinesQuery(int ExpOrg, int ExpStaff)
+        {
+            return await nominalDAL.ExpenseLinesQuery(ExpOrg, ExpStaff).ConfigureAwait(false);
+        }
+
     }
 }

@@ -915,5 +915,41 @@ namespace PE.Nominal.Web.Controllers
         }
 
         #endregion Making Tax Digital
+
+        #region Expense Posting
+
+        [HttpGet]
+        [Route("ExpenseStaff")]
+        public async Task<IActionResult> ExpenseStaff()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseStaffQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("ExpenseLines")]
+        public async Task<IActionResult> ExpenseList([FromBody]ExpenseStaff staff)
+        {
+            try
+            {
+                var data = await _actionService.ExpenseLinesQuery(staff.StaffOrg, staff.StaffIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
     }
 }

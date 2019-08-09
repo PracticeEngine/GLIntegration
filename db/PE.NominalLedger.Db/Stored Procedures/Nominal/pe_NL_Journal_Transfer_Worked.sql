@@ -20,7 +20,7 @@ IF @Journal = 'STA'
 
 UPDATE tblTranNominal SET NomIndex = 0, NLPosted = 1, NomBatch = @JournalNo, HangfireJobID = NULL
 FROM tblTranNominal INNER JOIN #Source ON NLSource = Src
-WHERE NLPeriodIndex = @Period AND NomIndex = 1 AND NLPosted = -1 AND NLOrg = @PracID AND HangfireJobId = @HangfireJobID
+WHERE NLPeriodIndex = @Period AND NomIndex > 0 AND NLPosted = -1 AND NLOrg = @PracID AND HangfireJobId = @HangfireJobID
 
 UPDATE tblTranNominalPost SET NomPosted = 1, NomBatch = @JournalNo, NomPostDate = GETDATE(), HangfireJobID = NULL
 FROM tblTranNominalPost INNER JOIN #Source ON NomSource = Src

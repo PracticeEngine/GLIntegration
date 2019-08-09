@@ -37,7 +37,7 @@ AS
 
                UPDATE tblTranNominal SET HangfireJobID = @HangfireJobID
                FROM tblTranNominal INNER JOIN #Source ON NLSource = Src
-               WHERE NLPeriodIndex = @Period AND NomIndex = 1 AND NLPosted = 0 AND NLOrg = @PracID AND HangfireJobId IS NULL
+               WHERE NLPeriodIndex = @Period AND NomIndex > 0 AND NLPosted = 0 AND NLOrg = @PracID AND HangfireJobId IS NULL
 
                UPDATE tblTranNominalPost SET HangfireJobID = @HangfireJobID
                FROM tblTranNominalPost INNER JOIN #Source ON NomSource = Src

@@ -262,6 +262,7 @@
         posting: boolean;
         bankrec: boolean;
         mtd: boolean;
+        expense: boolean;
         constructor() {
             console.info("Home");
             super();
@@ -271,8 +272,8 @@
             this.posting = this.hasAccess("Journal");
             this.bankrec = this.hasAccess("BankRec");
             this.mtd = this.hasAccess("MTD");
+            this.expense = this.hasAccess("ExpensePost");
         }
-
     }
 
     /**
@@ -1245,6 +1246,152 @@
             this.clearMessage();
             alert("Making Tax Digital Sync has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.goHome();
+        }
+    }
+
+
+    /**
+     * Expense Posting VM
+     */
+    export class ExpensePost extends BaseVM {
+        children: KnockoutObservableArray<GroupNode>;
+        selectedItem: KnockoutObservable<GroupNode>;
+        noMissingData: KnockoutObservable<boolean>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ExpensePost");
+            super(false);
+            this.children = ko.observableArray([]);
+            this.selectedItem = ko.observable(undefined);
+            this.noMissingData = ko.observable(false);
+            this.toDispose.push(this.selectedItem.subscribe((val) => {
+                if (val && val.filter) {
+                    this.loadItem(val);
+                } else {
+                    // Wipe out existing
+                    if (this.table) {
+                        // Wipe out existing
+                        $("#gltable").DataTable().destroy();
+                        $("#gltable").empty();
+                        this.table = null;
+                    }
+                }
+            }));
+            this.init();
+        }
+
+        toggleItem(item: GroupNode): void {
+            if (item) {
+                item.expanded(!item.expanded());
+            }
+        }
+
+        async loadItem(item: GroupNode): Promise<void> {
+            this.showMessage("Loading Staff...");
+            let data = await this.ajaxSendReceive<PE.Nominal.IExpenseLines[], Partial<PE.Nominal.IExpenseStaff>>("api/Actions/ExpenseLines", item.group);
+            if (this.table) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+                this.table = null;
+            }
+
+            this.table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.ExpDate,
+                        item.Amount,
+                        item.PostAcc,
+                        item.ExpOrg,
+                        item.Description,
+                        item
+                    ];
+                }),
+                columns: [
+                    {
+                        title: "Date",
+                        render: function (val) {
+                            return moment(val).format("MMM DD YYYY");
+                        }
+                    },
+                    {
+                        title: "Amount",
+                        className: "text-right",
+                        render: function (num) {
+                            num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                            return "$ " + parseFloat(num).toFixed(2);
+                        }
+                    },
+                    { title: "GL Account" },
+                    { title: "Org" },
+                    { title: "Description" },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Staff...");
+            let allGroups = await this.ajaxGet<PE.Nominal.IExpenseStaff[]>("api/Actions/ExpenseStaff");
+
+            // Group by Org, Staff] (selectable items in [])
+            let groups: Array<{ unq: keyof PE.Nominal.IExpenseStaff, name: keyof PE.Nominal.IExpenseStaff, filter: boolean }> = [
+                { unq: "StaffOrg", name: "OrgName", filter: false },
+                { unq: "StaffIndex", name: "StaffName", filter: true }
+            ];
+
+            // function to build partial item based on level
+            function buildItem(from: PE.Nominal.IExpenseStaff, level: number): Partial<PE.Nominal.IExpenseStaff> {
+                let x = {};
+                for (let i = 0; i <= level; i++) {
+                    let fld = groups[i].unq;
+                    x[fld] = from[fld];
+                }
+                return x;
+            }
+
+
+            // function to recursively build groups
+            function buildGroups(grps: PE.Nominal.IExpenseStaff[], level: number = 0): GroupNode[] {
+                let grpSettings = groups[level];
+                let distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                    return g[grpSettings.unq];
+                }));
+                return distValues.map(function (o) {
+                    let matches = grps.filter(function (g) {
+                        return g[grpSettings.unq] === o;
+                    });
+                    return {
+                        filter: grpSettings.filter,
+                        htmlSpace: "&nbsp;".repeat(level),
+                        title: matches[0][grpSettings.name].toString(),
+                        group: buildItem(matches[0], level),
+                        children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                        expanded: ko.observable(false)
+                    };
+                });
+            }
+            // Call buildGroups to construct the nexted groups 
+            this.children(buildGroups(allGroups));
+            if (allGroups.length > 0) {
+                this.noMissingData(allGroups[0].NumBlank == 0);
+            }
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async transfer(): Promise<void> {
+            this.showMessage("Submitting Expenses...");
+            await this.ajaxSendOnly("api/Actions/TransferExpenses", {});
+            this.clearMessage();
+            alert("Transfer has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+            this.init();
         }
     }
 }
