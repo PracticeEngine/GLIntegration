@@ -203,6 +203,8 @@
     <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Lines.sql" />
     <Build Include="Stored Procedures\Nominal\pe_NL_Missing_Expense_Staff.sql" />
     <Build Include="Stored Procedures\Nominal\pe_NL_Missing_Expense_Accounts.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Account_Update.sql" />
+    <Build Include="Tables\tblTranNominalExpMap.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">

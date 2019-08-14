@@ -1622,9 +1622,259 @@ var PE;
                     });
                 });
             };
+            ExpensePost.prototype.goToMappings = function () {
+                this.showPage("MissingExpenseAccountMap");
+            };
+            ExpensePost.prototype.goToStaff = function () {
+                this.showPage("MissingExpenseStaff");
+            };
             return ExpensePost;
         }(BaseVM));
         Nominal.ExpensePost = ExpensePost;
+        var CLOSE_EXPMAP_EDITOR = "CLOSEEXPMAPEDITOR";
+        var MissingExpenseAccountMap = (function (_super) {
+            __extends(MissingExpenseAccountMap, _super);
+            function MissingExpenseAccountMap() {
+                var _this = this;
+                console.info("MissingExpenseAccountMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            MissingExpenseAccountMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var _this = this;
+                    var data, table;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Missing Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/MissingExpenseAccountMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.PracName,
+                                            item.ChargeCode,
+                                            item.ChargeName,
+                                            item.ChargeExpAccount,
+                                            item.NonChargeExpAccount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "Expense Code" },
+                                        { title: "Expense Name" },
+                                        { title: "Chargeable Account" },
+                                        { title: "Non-Chargeable Account" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ExpAccountMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            MissingExpenseAccountMap.prototype.goToExpenses = function () {
+                this.showPage("ExpensePost");
+            };
+            return MissingExpenseAccountMap;
+        }(BaseVM));
+        Nominal.MissingExpenseAccountMap = MissingExpenseAccountMap;
+        var ExpAccountMapEditor = (function (_super) {
+            __extends(ExpAccountMapEditor, _super);
+            function ExpAccountMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.acctTypes = ko.observableArray([]);
+                _this.selectedChgType = ko.observable(item.ChargeExpAccountType);
+                _this.selectedNonType = ko.observable(item.NonChargeExpAccountType);
+                _this.chgAccounts = ko.observableArray([]);
+                _this.nonAccounts = ko.observableArray([]);
+                _this.selectedChgAccount = ko.observable(item.ChargeExpAccount);
+                _this.selectedNonAccount = ko.observable(item.NonChargeExpAccount);
+                _this.toDispose.push(_this.selectedChgType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
+                    var acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!(this.item && this.item.ExpOrg && acctType)) return [3, 2];
+                                this.showMessage("Loading Account List...");
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType)];
+                            case 1:
+                                acctList = _a.sent();
+                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
+                                this.chgAccounts(acctList);
+                                this.clearMessage();
+                                return [3, 3];
+                            case 2:
+                                this.chgAccounts([]);
+                                _a.label = 3;
+                            case 3: return [2];
+                        }
+                    });
+                }); }));
+                _this.toDispose.push(_this.selectedNonType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
+                    var acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!(this.item && this.item.ExpOrg && acctType)) return [3, 2];
+                                this.showMessage("Loading Account List...");
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType)];
+                            case 1:
+                                acctList = _a.sent();
+                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
+                                this.nonAccounts(acctList);
+                                this.clearMessage();
+                                return [3, 3];
+                            case 2:
+                                this.nonAccounts([]);
+                                _a.label = 3;
+                            case 3: return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ExpAccountMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var types, acctList, acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading GL Information...");
+                                if (!this.item.ExpOrg) return [3, 5];
+                                return [4, this.ajaxGet("api/Actions/AccountTypes/" + this.item.ExpOrg)];
+                            case 1:
+                                types = _a.sent();
+                                this.acctTypes(types);
+                                if (!this.item.ChargeExpAccountType) return [3, 3];
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.ChargeExpAccountType)];
+                            case 2:
+                                acctList = _a.sent();
+                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
+                                this.chgAccounts(acctList);
+                                _a.label = 3;
+                            case 3:
+                                if (!this.item.NonChargeExpAccountType) return [3, 5];
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.NonChargeExpAccountType)];
+                            case 4:
+                                acctList = _a.sent();
+                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
+                                this.nonAccounts(acctList);
+                                _a.label = 5;
+                            case 5:
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpAccountMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = this.item;
+                                toSave.ChargeExpAccountType = this.selectedChgType();
+                                toSave.ChargeExpAccount = this.selectedChgAccount();
+                                toSave.NonChargeExpAccountType = this.selectedNonType();
+                                toSave.NonChargeExpAccount = this.selectedNonAccount();
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_EXPMAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExpAccountMapEditor;
+        }(BaseVM));
+        var MissingExpenseStaff = (function (_super) {
+            __extends(MissingExpenseStaff, _super);
+            function MissingExpenseStaff() {
+                var _this = this;
+                console.info("MissingExpenseStaff");
+                _this = _super.call(this) || this;
+                _this.init();
+                return _this;
+            }
+            MissingExpenseStaff.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, table;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Missing Staff Details...");
+                                return [4, this.ajaxGet("api/Actions/MissingExpenseStaff")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.StaffIndex,
+                                            item.StaffCode,
+                                            item.StaffName,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Staff ID" },
+                                        { title: "Staff Code" },
+                                        { title: "Staff Name" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            MissingExpenseStaff.prototype.goToExpenses = function () {
+                this.showPage("ExpensePost");
+            };
+            return MissingExpenseStaff;
+        }(BaseVM));
+        Nominal.MissingExpenseStaff = MissingExpenseStaff;
     })(Nominal = PE.Nominal || (PE.Nominal = {}));
 })(PE || (PE = {}));
 ko.bindingHandlers.bsmodal = {

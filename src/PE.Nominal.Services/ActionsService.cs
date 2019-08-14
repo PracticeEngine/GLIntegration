@@ -210,5 +210,18 @@ namespace PE.Nominal
             return await nominalDAL.ExpenseLinesQuery(ExpOrg, ExpStaff).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseMissingAccountsQuery()
+        {
+            return await nominalDAL.ExpenseMissingAccountsQuery().ConfigureAwait(false);
+        }
+        public async Task<IEnumerable<MissingExpenseStaff>> ExpenseMissingStaffQuery()
+        {
+            return await nominalDAL.ExpenseMissingStaffQuery().ConfigureAwait(false);
+        }
+
+        public async Task UpdateExpenseAccountMappingCmd(MissingExpenseAccountMap item)
+        {
+            await nominalDAL.UpdateExpenseAccountMappingCmd(item.ExpOrg, item.ChargeCode, item.ChargeExpAccountType, item.ChargeExpAccount, item.NonChargeExpAccountType, item.NonChargeExpAccount).ConfigureAwait(false);
+        }
     }
 }

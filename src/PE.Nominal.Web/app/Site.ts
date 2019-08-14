@@ -1399,7 +1399,206 @@
             alert("Transfer has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.init();
         }
+
+        goToMappings(): void {
+            this.showPage("MissingExpenseAccountMap");
+        }
+
+        goToStaff(): void {
+            this.showPage("MissingExpenseStaff");
+        }
     }
+
+    const CLOSE_EXPMAP_EDITOR = "CLOSEEXPMAPEDITOR";
+    /**
+     * Missing Expense Account Mappings VM
+     */
+    export class MissingExpenseAccountMap extends BaseVM {
+        editor: KnockoutObservable<ExpAccountMapEditor>;
+        constructor() {
+            console.info("MissingExpenseAccountMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Missing Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseAccountMap[]>("api/Actions/MissingExpenseAccountMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.PracName,
+                        item.ChargeCode,
+                        item.ChargeName,
+                        item.ChargeExpAccount,
+                        item.NonChargeExpAccount,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "Expense Code" },
+                    { title: "Expense Name" },
+                    { title: "Chargeable Account" },
+                    { title: "Non-Chargeable Account" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ExpAccountMapEditor(item));
+            });
+            this.clearMessage();
+        }
+
+        goToExpenses(): void {
+            this.showPage("ExpensePost");
+        }
+    }
+
+    /**
+     * Class for Editing a Expense Account Mapping
+     */
+    class ExpAccountMapEditor extends BaseVM {
+        item: PE.Nominal.IMissingExpenseAccountMap;
+        acctTypes: KnockoutObservableArray<PE.Nominal.IGLType>;
+        selectedChgType: KnockoutObservable<string>;
+        selectedNonType: KnockoutObservable<string>;
+        chgAccounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
+        nonAccounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
+        selectedChgAccount: KnockoutObservable<string>;
+        selectedNonAccount: KnockoutObservable<string>;
+        constructor(item: PE.Nominal.IMissingExpenseAccountMap) {
+            super(false);
+            this.item = item;
+            this.acctTypes = ko.observableArray([]);
+            this.selectedChgType = ko.observable(item.ChargeExpAccountType);
+            this.selectedNonType = ko.observable(item.NonChargeExpAccountType);
+            this.chgAccounts = ko.observableArray([]);
+            this.nonAccounts = ko.observableArray([]);
+            this.selectedChgAccount = ko.observable(item.ChargeExpAccount);
+            this.selectedNonAccount = ko.observable(item.NonChargeExpAccount);
+            this.toDispose.push(this.selectedChgType.subscribe(async (acctType) => {
+                if (this.item && this.item.ExpOrg && acctType) {
+                    this.showMessage("Loading Account List...");
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType);
+                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
+                    this.chgAccounts(acctList);
+                    this.clearMessage();
+                } else {
+                    this.chgAccounts([]);
+                }
+            }));
+            this.toDispose.push(this.selectedNonType.subscribe(async (acctType) => {
+                if (this.item && this.item.ExpOrg && acctType) {
+                    this.showMessage("Loading Account List...");
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType);
+                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
+                    this.nonAccounts(acctList);
+                    this.clearMessage();
+                } else {
+                    this.nonAccounts([]);
+                }
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            if (this.item.ExpOrg) {
+                let types = await this.ajaxGet<PE.Nominal.IGLType[]>("api/Actions/AccountTypes/" + this.item.ExpOrg);
+                this.acctTypes(types);
+                if (this.item.ChargeExpAccountType) {
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.ChargeExpAccountType);
+                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
+                    this.chgAccounts(acctList);
+                }
+                if (this.item.NonChargeExpAccountType) {
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.NonChargeExpAccountType);
+                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
+                    this.nonAccounts(acctList);
+                }
+            }
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IMissingExpenseAccountMap = this.item;
+            toSave.ChargeExpAccountType = this.selectedChgType();
+            toSave.ChargeExpAccount = this.selectedChgAccount();
+            toSave.NonChargeExpAccountType = this.selectedNonType();
+            toSave.NonChargeExpAccount = this.selectedNonAccount();
+            await this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_EXPMAP_EDITOR, {});
+        }
+    }
+    /**
+  * Missing Expense Staff VM
+  */
+    export class MissingExpenseStaff extends BaseVM {
+        constructor() {
+            console.info("MissingExpenseStaff");
+            super();
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Missing Staff Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseStaff[]>("api/Actions/MissingExpenseStaff");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.StaffIndex,
+                        item.StaffCode,
+                        item.StaffName,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Staff ID" },
+                    { title: "Staff Code" },
+                    { title: "Staff Name" },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+        goToExpenses(): void {
+            this.showPage("ExpensePost");
+        }
+    }
+
 }
 
 // Knockout Binding Handlers

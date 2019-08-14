@@ -184,20 +184,11 @@ declare namespace PE.Nominal {
 		VM: string | null;
 	}
 	interface IMissingExpenseAccountMap {
-		ExpMapIndex: number;
-		ExpOrg: number;
-		PracName: string | null;
+		ChargeIndex: number;
 		ChargeCode: string | null;
 		ChargeName: string | null;
-		ChargeExpAccountType: string | null;
 		ChargeExpAccount: string | null;
-		NonChargeExpAccountType: string | null;
 		NonChargeExpAccount: string | null;
-	}
-	interface IMissingExpenseStaff {
-		StaffIndex: number;
-		StaffCode: string | null;
-		StaffName: string | null;
 	}
 	interface IMissingMap extends PE.Nominal.IMapBase {
 		NomOrg: number;

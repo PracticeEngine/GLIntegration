@@ -950,6 +950,57 @@ namespace PE.Nominal.Web.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
+        [HttpGet]
+        [Route("MissingExpenseAccountMap")]
+        public async Task<IActionResult> MissingExpenseAccountMap()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseMissingAccountsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateExpenseAccountMapping")]
+        public async Task<IActionResult> UpdateExpenseAccountMapping([FromBody]MissingExpenseAccountMap mapping)
+        {
+            try
+            {
+                await _actionService.UpdateExpenseAccountMappingCmd(mapping);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("MissingExpenseStaff")]
+        public async Task<IActionResult> MissingExpenseStaff()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseMissingStaffQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
         #endregion
     }
 }

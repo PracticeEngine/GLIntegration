@@ -242,5 +242,21 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<ExpenseLines>("pe_NL_Expense_Lines {0}, {1}", ExpOrg, ExpStaff).ConfigureAwait(false);
             return results;
         }
+
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseMissingAccountsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseAccountMap>("pe_NL_Missing_Expense_Accounts").ConfigureAwait(false);
+            return results;
+        }
+        public async Task<IEnumerable<MissingExpenseStaff>> ExpenseMissingStaffQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseStaff>("pe_NL_Missing_Expense_Staff").ConfigureAwait(false);
+            return results;
+        }
+        public async Task UpdateExpenseAccountMappingCmd(int ExpOrg, string ChargeCode, string ChargeExpAccountType, string ChargeExpAccount, string NonChargeExpAccountType, string NonChargeExpAccount)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Account_Update {0}, {1}, {2}, {3}, {4}, {5}", ExpOrg, ChargeCode, ChargeExpAccountType, ChargeExpAccount, NonChargeExpAccountType, NonChargeExpAccount).ConfigureAwait(false);
+        }
+
     }
 }

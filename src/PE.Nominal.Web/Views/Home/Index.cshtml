@@ -678,7 +678,7 @@
             <div class="panel panel-primary panel-headroom">
                 <div class="panel-heading">
                     Making Tax Digital
-                </div>               
+                </div>
                 <div class="panel-body" data-bind="if:isReady">
                     <strong>Current Period</strong>
                     <div class="row">
@@ -721,10 +721,107 @@
                     </div>
                 </div>
                 <div class="panel-footer text-right">
-                    <button class="btn btn-default" data-bind="visible:hasMissingStaff, click:goHome">Missing Staff Data</button>
-                    <button class="btn btn-default" data-bind="visible:hasMissingAccounts, click:goHome">Missing Account Data</button>
+                    <button class="btn btn-default" data-bind="visible:hasMissingStaff, click:goToStaff">Missing Staff Data</button>
+                    <button class="btn btn-default" data-bind="visible:hasMissingAccounts, click:goToMappings">Missing Account Data</button>
                     <button class="btn btn-default" data-bind="click:goHome">Close</button>
                     <button class="btn btn-primary" data-bind="enable:noMissingData, click:transfer">Transfer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="nested-ExpenseAccountMap-Editor">
+    <div class="modal fade" tabindex="-1" role="dialog" data-bind="bsmodal:editor">
+        <div class="modal-dialog" role="document" data-bind="if:editor">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Mapping</h4>
+                </div>
+                <div class="modal-body" data-bind="with:editor">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Expense Code</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.ChargeCode"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Expense Name</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.ChargeName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account Type</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:acctTypes,value:selectedChgType,optionsValue:'AccountTypeCode',optionsText:'AccountTypeDesc',optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:chgAccounts,optionsText:'AccountDesc',optionsValue:'AccountCode',value:selectedChgAccount,optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non Chargeable Expense Account Type</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:acctTypes,value:selectedNonType,optionsValue:'AccountTypeCode',optionsText:'AccountTypeDesc',optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non Chargeable Expense Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:nonAccounts,optionsText:'AccountDesc',optionsValue:'AccountCode',value:selectedNonAccount,optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" data-bind="with:editor">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bind="click:saveMapping">Save Mapping</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</template>
+<template id="body-MissingExpenseAccountMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Missing Expense Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goToExpenses">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ExpenseAccountMap-Editor'-->
+    <!-- /ko -->
+</template>
+<template id="body-MissingExpenseStaff">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Missing Expense Staff
+                </div>
+                <div style="text-align:center">
+                    <h2>No Account can be found for these Staff in the G/L system.</h2>
+                    <p>Once an account has been created or amended run Create Journal to pick up new data.</p>
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goToExpenses">Close</button>
                 </div>
             </div>
         </div>
