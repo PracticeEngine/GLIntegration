@@ -199,10 +199,10 @@ declare module PE.Nominal {
         OrgName: string | null;
         StaffIndex: number;
         StaffName: string | null;
-        NumBlank: number;
+        BlankStaff: number;
+        BlankAccounts: number;
     }
     interface IExpenseLines {
-        NumBlank: number;
         NomExpIndex: number;
         PeriodIndex: number;
         ExpOrg: number;

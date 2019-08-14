@@ -31,6 +31,7 @@ namespace PE.Nominal
         /// <summary>
         /// Number of blank lines
         /// </summary>
-        public int NumBlank { get; set; }
+        public int BlankStaff { get; set; }
+        public int BlankAccounts { get; set; }
     }
 }

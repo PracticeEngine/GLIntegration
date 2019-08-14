@@ -1471,6 +1471,8 @@ var PE;
                 _this.children = ko.observableArray([]);
                 _this.selectedItem = ko.observable(undefined);
                 _this.noMissingData = ko.observable(false);
+                _this.hasMissingStaff = ko.observable(true);
+                _this.hasMissingAccounts = ko.observable(true);
                 _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
                     if (val && val.filter) {
                         _this.loadItem(val);
@@ -1592,7 +1594,9 @@ var PE;
                                 ];
                                 this.children(buildGroups(allGroups));
                                 if (allGroups.length > 0) {
-                                    this.noMissingData(allGroups[0].NumBlank == 0);
+                                    this.hasMissingStaff(allGroups[0].BlankStaff > 0);
+                                    this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
+                                    this.noMissingData(!this.hasMissingStaff() && !this.hasMissingAccounts());
                                 }
                                 this.clearMessage();
                                 this.isReady(true);

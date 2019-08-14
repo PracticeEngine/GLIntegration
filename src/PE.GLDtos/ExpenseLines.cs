@@ -9,11 +9,6 @@ namespace PE.Nominal
     public class ExpenseLines
     {
         /// <summary>
-        /// Number of blank lines
-        /// </summary>
-        public int NumBlank { get; set; }
-
-        /// <summary>
         /// The Nominal Expense Index
         /// </summary>
         public int NomExpIndex { get; set; }

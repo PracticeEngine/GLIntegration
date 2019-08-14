@@ -2,8 +2,18 @@
 
 AS
 
-SELECT DISTINCT S.StaffOrganisation As StaffOrg, S.StaffIndex, C.PracName As OrgName, S.StaffName, 
-	(Select Count(NomExpIndex) From tblTranNominalPostExpenses WHERE Posted = 0 AND (PostAcc = '' OR VendorCode = ''))  AS NumBlank
+DECLARE @BlankStaff int
+DECLARE @BlankAccounts int
+
+SELECT @BlankStaff = Count(DISTINCT VendorIndex) 
+FROM tblTranNominalPostExpenses 
+WHERE Posted = 0 AND VendorCode = ''
+
+SELECT @BlankAccounts = Count(DISTINCT DisbCode) 
+FROM tblTranNominalPostExpenses 
+WHERE Posted = 0 AND PostAcc = ''
+
+SELECT DISTINCT S.StaffOrganisation As StaffOrg, S.StaffIndex, C.PracName As OrgName, S.StaffName, @BlankStaff AS BlankStaff, @BlankAccounts AS BlankAccounts
 FROM tblTranNominalPostExpenses P
 INNER JOIN tblStaff S ON P.VendorIndex = S.StaffIndex
 INNER JOIN tblControl C ON P.ExpOrg = C.PracID

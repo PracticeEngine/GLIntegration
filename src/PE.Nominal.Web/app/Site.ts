@@ -1257,6 +1257,8 @@
         children: KnockoutObservableArray<GroupNode>;
         selectedItem: KnockoutObservable<GroupNode>;
         noMissingData: KnockoutObservable<boolean>;
+        hasMissingStaff: KnockoutObservable<boolean>;
+        hasMissingAccounts: KnockoutObservable<boolean>;
         table: DataTables.Api;
         constructor() {
             console.info("ExpensePost");
@@ -1264,6 +1266,8 @@
             this.children = ko.observableArray([]);
             this.selectedItem = ko.observable(undefined);
             this.noMissingData = ko.observable(false);
+            this.hasMissingStaff = ko.observable(true);
+            this.hasMissingAccounts = ko.observable(true);
             this.toDispose.push(this.selectedItem.subscribe((val) => {
                 if (val && val.filter) {
                     this.loadItem(val);
@@ -1380,7 +1384,9 @@
             // Call buildGroups to construct the nexted groups 
             this.children(buildGroups(allGroups));
             if (allGroups.length > 0) {
-                this.noMissingData(allGroups[0].NumBlank == 0);
+                this.hasMissingStaff(allGroups[0].BlankStaff > 0);
+                this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
+                this.noMissingData(!this.hasMissingStaff() && !this.hasMissingAccounts());
             }
             this.clearMessage();
             this.isReady(true);

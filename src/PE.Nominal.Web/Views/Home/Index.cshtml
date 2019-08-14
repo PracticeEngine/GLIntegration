@@ -721,6 +721,8 @@
                     </div>
                 </div>
                 <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="visible:hasMissingStaff, click:goHome">Missing Staff Data</button>
+                    <button class="btn btn-default" data-bind="visible:hasMissingAccounts, click:goHome">Missing Account Data</button>
                     <button class="btn btn-default" data-bind="click:goHome">Close</button>
                     <button class="btn btn-primary" data-bind="enable:noMissingData, click:transfer">Transfer</button>
                 </div>
