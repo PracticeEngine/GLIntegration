@@ -2,10 +2,10 @@
 
 AS
 
-SELECT tblTranNominal.NLPeriodIndex, tblControlPeriods.PeriodDescription, tblControlPeriods.PeriodStartDate, tblControlPeriods.PeriodEndDate
-FROM tblControlPeriods 
-INNER JOIN tblTranNominal ON tblControlPeriods.PeriodIndex = tblTranNominal.NLPeriodIndex
-INNER JOIN tblTranNominalOrgs ON tblTranNominal.NLOrg = tblTranNominalOrgs.PracID
-WHERE tblTranNominal.NLPosted = 0 AND tblTranNominalOrgs.NLTransfer = 1
-GROUP BY tblTranNominal.NLPeriodIndex, tblControlPeriods.PeriodDescription, tblControlPeriods.PeriodStartDate, tblControlPeriods.PeriodEndDate
-ORDER BY tblTranNominal.NLPeriodIndex, tblControlPeriods.PeriodDescription, tblControlPeriods.PeriodStartDate, tblControlPeriods.PeriodEndDate
+SELECT N.NLPeriodIndex, C.PeriodDescription, C.PeriodStartDate, C.PeriodEndDate
+FROM tblControlPeriods C
+INNER JOIN (SELECT DISTINCT NLOrg, NLPEriodIndex FROM tblTranNominal WHERE NLPosted = 0) N ON C.PeriodIndex = N.NLPeriodIndex
+INNER JOIN tblTranNominalOrgs O ON N.NLOrg = O.PracID
+WHERE O.NLTransfer = 1
+GROUP BY N.NLPeriodIndex, C.PeriodDescription, C.PeriodStartDate, C.PeriodEndDate
+ORDER BY N.NLPeriodIndex, C.PeriodDescription, C.PeriodStartDate, C.PeriodEndDate
