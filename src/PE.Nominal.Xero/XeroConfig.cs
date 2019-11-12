@@ -25,6 +25,11 @@ namespace PE.Nominal.XeroGL
         /// Turns on Logging to App_Data Folder
         /// </summary>
         public bool LogToAppData { get; set; }
+
+        /// <summary>
+        /// Post as Draft
+        /// </summary>
+        public bool? PostAsDraft { get; set; }
     }
 
     public class XeroOrgConfig

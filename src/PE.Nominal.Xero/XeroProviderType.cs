@@ -466,7 +466,7 @@ namespace PE.Nominal.XeroGL
                 if (pagedContacts != null && pagedContacts.Count() > 0)
                 {
                     xeroContacts.AddRange(pagedContacts);
-}
+                }
                 else
                 {
                     moreContacts = false;
@@ -663,7 +663,7 @@ namespace PE.Nominal.XeroGL
                         var xeroInv = new Xero.Api.Core.Model.Invoice();
 
                         xeroInv.Type = Xero.Api.Core.Model.Types.InvoiceType.AccountsReceivable;
-                        xeroInv.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
+                        xeroInv.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? Xero.Api.Core.Model.Status.InvoiceStatus.Draft : Xero.Api.Core.Model.Status.InvoiceStatus.Authorised);
                         xeroInv.Reference = inv.DebtTranRefAlpha;
                         xeroInv.Number = inv.DebtTranIndex.ToString();
 
@@ -718,7 +718,7 @@ namespace PE.Nominal.XeroGL
                         var xeroCn = new Xero.Api.Core.Model.CreditNote();
 
                         xeroCn.Type = Xero.Api.Core.Model.Types.CreditNoteType.AccountsReceivable;
-                        xeroCn.Status = Xero.Api.Core.Model.Status.InvoiceStatus.Authorised;
+                        xeroCn.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? Xero.Api.Core.Model.Status.InvoiceStatus.Draft : Xero.Api.Core.Model.Status.InvoiceStatus.Authorised);
                         xeroCn.Reference = inv.DebtTranRefAlpha;
                         xeroCn.Number = inv.DebtTranIndex.ToString();
 

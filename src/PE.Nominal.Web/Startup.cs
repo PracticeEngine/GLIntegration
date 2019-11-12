@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.AzureAppServices;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Serialization;
 using PE.Nominal.Web.Filters;
@@ -18,8 +19,11 @@ namespace PE.Nominal.Web
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        private readonly ILogger logger;
+
+        public Startup(IHostingEnvironment env, ILogger<Startup> Logger)
         {
+            logger = Logger;
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -45,7 +49,6 @@ namespace PE.Nominal.Web
         {
             // Add Basic/Standard ASP.Net services.
             services.AddOptions();
-            services.AddLogging();
             services.AddMemoryCache();
             services.AddMvc()
                 .AddJsonOptions(opt =>
@@ -60,6 +63,7 @@ namespace PE.Nominal.Web
             );
             services.AddDataProtection();
 
+            services.Configure<AzureFileLoggerOptions>(Configuration.GetSection("AzureLogging"));
             // Add The Custom DAL and Services in the Solution
             services.AddDataAccessLayer(Configuration);
             services.AddNominalLedgerServices(Configuration);
@@ -100,17 +104,11 @@ namespace PE.Nominal.Web
         /// <param name="app"></param>
         /// <param name="env"></param>
         /// <param name="loggerFactory"></param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            loggerFactory.AddEventSourceLogger();
             if (env.IsDevelopment())
             {
-                loggerFactory.AddDebug(LogLevel.Trace);
                 app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                loggerFactory.AddDebug(LogLevel.Warning);
             }
 
             app.UseStaticFiles();
