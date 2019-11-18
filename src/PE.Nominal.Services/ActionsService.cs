@@ -104,7 +104,7 @@ namespace PE.Nominal
             await nominalDAL.SaveAccountMappingCmd(MapIndex, AccountCode, AccountTypeCode).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<GLMapping>> NLMappingsQuery()
+        public async Task<IEnumerable<MissingMap>> NLMappingsQuery()
         {
             return await nominalDAL.NLMappingsQuery().ConfigureAwait(false);
         }

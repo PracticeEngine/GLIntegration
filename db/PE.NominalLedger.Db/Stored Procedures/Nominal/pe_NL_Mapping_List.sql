@@ -13,7 +13,10 @@ INNER JOIN tblTranNominalOrgs O ON M.MapOrg = O.PracID
 LEFT JOIN tblStaff S ON M.MapPart = S.StaffIndex
 WHERE O.NLTransfer = 1
 
-SELECT *
-FROM #Mappings
-ORDER BY MapOrg, MapSource, MapSection, MapAccount, MapOffice, MapServ, MapDept
-
+SELECT M.*, C.PracName As OrgName, Coalesce(O.OfficeName, 'No Office') As OfficeName, Coalesce(S.ServTitle, 'No Service') As ServiceName, M.StaffName As PartnerName, Coalesce(D.DeptName, 'No Dept') As DepartmentName
+FROM #Mappings M
+INNER JOIN tblControl C ON M.MapOrg = C.PracID
+LEFT JOIN tblOffices O ON M.MapOffice = O.OfficeCode
+LEFT JOIN tblServices S ON M.MapServ = S.ServIndex
+LEFT JOIN tblDepartment D ON M.MapDept = D.DeptIdx
+ORDER BY M.MapOrg, M.MapSource, M.MapSection, M.MapAccount, M.MapOffice, M.MapServ, M.MapDept
