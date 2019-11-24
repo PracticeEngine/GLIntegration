@@ -186,6 +186,22 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Journal_Transfer_Failed {0}, {1}, {2}", Org, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<ExpenseExtract>> TransferExpenseQuery(int Org, int BatchID = 0, string HangfireJobId = null)
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseExtract>("pe_NL_Expenses_Transfer {0}, {1}, {2}", Org, BatchID, HangfireJobId).ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task FlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expenses_Transfer_Worked {0}, {1}", Org, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expenses_Transfer_Failed {0}, {1}", Org, HangfireJobId).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<JournalRepostBatch>> JournalRepostListQuery(int NomPeriodIndex)
         {
             var results = await context.Database.SqlQueryAsync<JournalRepostBatch>("pe_NL_Journal_Repost_List {0}", NomPeriodIndex).ConfigureAwait(false);
@@ -253,9 +269,9 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<MissingExpenseStaff>("pe_NL_Missing_Expense_Staff").ConfigureAwait(false);
             return results;
         }
-        public async Task UpdateExpenseAccountMappingCmd(int ExpOrg, string ChargeCode, string ChargeExpAccountType, string ChargeExpAccount, string NonChargeExpAccountType, string NonChargeExpAccount)
+        public async Task UpdateExpenseAccountMappingCmd(int ExpOrg, string ChargeCode, string ChargeExpAccount, string NonChargeExpAccount, int ChargeSuffix1, int ChargeSuffix2, int ChargeSuffix3, int NonChargeSuffix1, int NonChargeSuffix2, int NonChargeSuffix3)
         {
-            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Account_Update {0}, {1}, {2}, {3}, {4}, {5}", ExpOrg, ChargeCode, ChargeExpAccountType, ChargeExpAccount, NonChargeExpAccountType, NonChargeExpAccount).ConfigureAwait(false);
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Account_Update {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}", ExpOrg, ChargeCode, ChargeExpAccount, NonChargeExpAccount, ChargeSuffix1, ChargeSuffix2, ChargeSuffix3, NonChargeSuffix1, NonChargeSuffix2, NonChargeSuffix3).ConfigureAwait(false);
         }
 
     }

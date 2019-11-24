@@ -51,10 +51,10 @@ BEGIN TRAN
 		IF @Server <> ''
 			SET @SQL = @SQL + @Server + '.'
 		SET @SQL = @SQL + @DB + '.dbo.PL_TRN_TEMP(PL_TRAN_ID, PL_DETAIL_LINE_NO, PL_STATUS_TEMP, PL_USE_DEFAULT, PL_USER_ID, PL_TRANSACTION_TYPE, PL_SUPPLIER_CODE, PL_TRAN_REFERENCE, PL_BATCH_REFERENCE, PL_TRAN_DATE, PL_TRAN_DESCRIPTION, PL_DETAIL_ANALYSIS_CODE, PL_DETAIL_HOME_VALUE)
-		SELECT ' + LTrim(Str(@BatchNum)) + ', ROW_NUMBER() OVER (ORDER BY A.ExpIndex, A.AllocIndex), 0, '''', ''INT'', ''INV'', E.VendorCode, A.ExpIndex, E.VendorCode, E.ExpDate, A.[Description], E.PostAcc, E.Amount
+		SELECT ROW_NUMBER() OVER (ORDER BY A.ExpIndex, A.AllocIndex), 1, 0, '''', ''INT'', ''INV'', E.VendorCode, A.ExpIndex, E.VendorCode, E.ExpDate, A.[Description], E.PostAcc, E.Amount
 		FROM tblTranNominalPostExpenses E 
 		INNER JOIN tblExpenseAllocation A ON E.AllocIndex = A.AllocIndex
-		WHERE E.PeriodIndex = ' + LTrim(Str(@Period)) + 'AND E.Posted = 0 AND E.Batch = ' + LTrim(Str(@BatchID))
+		WHERE E.PeriodIndex = ' + LTrim(Str(@Period)) + 'AND E.Posted = 0 AND E.Batch = ' + LTrim(Str(@BatchID)) + ' AND E.ExpOrg = '  + LTrim(Str(@Org))
 
 		PRINT @SQL
 		EXEC (@SQL)
@@ -71,6 +71,18 @@ BEGIN TRAN
 	
 		IF @@ERROR <> 0 GOTO TRAN_ABORT
 		
+		SET @SQL = 'UPDATE '
+		IF @Server <> ''
+			SET @SQL = @SQL + @Server + '.'
+		SET @SQL = @SQL + @DB + '.dbo.PL_TRN_TEMP
+		SET PL_STATUS_TEMP = 2
+		WHERE PL_TRAN_ID = ' + LTrim(Str(@BatchNum))
+	
+		PRINT @SQL
+		EXEC (@SQL)
+	
+		IF @@ERROR <> 0 GOTO TRAN_ABORT
+
 		CREATE TABLE #Count ( NumRows int )
 
 		SET @SQL = 'INSERT INTO #Count (NumRows)
@@ -99,34 +111,6 @@ BEGIN TRAN
 			END
 			
 		DROP TABLE #Count
-
-		SET @SQL = 'UPDATE '
-		IF @Server <> ''
-			SET @SQL = @SQL + @Server + '.'
-		SET @SQL = @SQL + @DB + '.dbo.PL_TRN_TEMP
-		SET PL_STATUS_TEMP = 2
-		WHERE PL_TRAN_ID = ' + LTrim(Str(@BatchNum))
-	
-		PRINT @SQL
-		EXEC (@SQL)
-	
-		IF @@ERROR <> 0 GOTO TRAN_ABORT
-
-
-		IF @BatchID = 0
-			BEGIN
-			UPDATE tblTranNominalPostExpenses
-			SET Posted = 1, Batch = @BatchNum, PostDate = GetDate()
-			WHERE Posted = 0 AND ExpOrg = @Org AND PeriodIndex = @Period
-		
-			IF @@ERROR <> 0 GOTO TRAN_ABORT
-	
-			UPDATE tblTranNominalExpense
-			SET ExpPosted = 1, ExpBatch = @BatchNum, ExpPostDate = GetDate()
-			WHERE ExpPrac = @Org AND ExpPosted = 0
-		
-			IF @@ERROR <> 0 GOTO TRAN_ABORT
-			END
 
 		FETCH csr_Org INTO @Org, @Server, @DB
 		END

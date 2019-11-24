@@ -125,6 +125,11 @@ namespace PE.Nominal
             return await nominalDAL.TransferJournalQuery(Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<ExpenseExtract>> TransferExpenseQuery(int Org, int BatchID = 0, string HangfireJobId = null)
+        {
+            return await nominalDAL.TransferExpenseQuery(Org, BatchID, HangfireJobId).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<JournalExtract>> ExportJournalQuery(int BatchID = 0)
         {
             return await nominalDAL.ExtractJournalQuery(BatchID).ConfigureAwait(false);
@@ -145,6 +150,15 @@ namespace PE.Nominal
             await nominalDAL.UnFlagTransferredCmd(Org, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
+        public async Task FlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await nominalDAL.FlagExpensesTransferredCmd(Org, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await nominalDAL.UnFlagExpensesTransferredCmd(Org, HangfireJobId).ConfigureAwait(false);
+        }
         public async Task<IEnumerable<JournalRepostBatch>> JournalRepostListQuery(int NomPeriodIndex)
         {
             return await nominalDAL.JournalRepostListQuery(NomPeriodIndex).ConfigureAwait(false);
@@ -221,7 +235,7 @@ namespace PE.Nominal
 
         public async Task UpdateExpenseAccountMappingCmd(MissingExpenseAccountMap item)
         {
-            await nominalDAL.UpdateExpenseAccountMappingCmd(item.ExpOrg, item.ChargeCode, item.ChargeExpAccountType, item.ChargeExpAccount, item.NonChargeExpAccountType, item.NonChargeExpAccount).ConfigureAwait(false);
+            await nominalDAL.UpdateExpenseAccountMappingCmd(item.ExpOrg, item.ChargeCode, item.ChargeExpAccount, item.NonChargeExpAccount, item.ChargeSuffix1, item.ChargeSuffix2, item.ChargeSuffix3, item.NonChargeSuffix1, item.NonChargeSuffix2, item.NonChargeSuffix3).ConfigureAwait(false);
         }
     }
 }

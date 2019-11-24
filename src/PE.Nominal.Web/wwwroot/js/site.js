@@ -1708,90 +1708,24 @@ var PE;
             function ExpAccountMapEditor(item) {
                 var _this = _super.call(this, false) || this;
                 _this.item = item;
-                _this.acctTypes = ko.observableArray([]);
-                _this.selectedChgType = ko.observable(item.ChargeExpAccountType);
-                _this.selectedNonType = ko.observable(item.NonChargeExpAccountType);
-                _this.chgAccounts = ko.observableArray([]);
-                _this.nonAccounts = ko.observableArray([]);
-                _this.selectedChgAccount = ko.observable(item.ChargeExpAccount);
-                _this.selectedNonAccount = ko.observable(item.NonChargeExpAccount);
-                _this.toDispose.push(_this.selectedChgType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
-                    var acctList;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!(this.item && this.item.ExpOrg && acctType)) return [3, 2];
-                                this.showMessage("Loading Account List...");
-                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType)];
-                            case 1:
-                                acctList = _a.sent();
-                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
-                                this.chgAccounts(acctList);
-                                this.clearMessage();
-                                return [3, 3];
-                            case 2:
-                                this.chgAccounts([]);
-                                _a.label = 3;
-                            case 3: return [2];
-                        }
-                    });
-                }); }));
-                _this.toDispose.push(_this.selectedNonType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
-                    var acctList;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!(this.item && this.item.ExpOrg && acctType)) return [3, 2];
-                                this.showMessage("Loading Account List...");
-                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType)];
-                            case 1:
-                                acctList = _a.sent();
-                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
-                                this.nonAccounts(acctList);
-                                this.clearMessage();
-                                return [3, 3];
-                            case 2:
-                                this.nonAccounts([]);
-                                _a.label = 3;
-                            case 3: return [2];
-                        }
-                    });
-                }); }));
+                _this.chargeCode = ko.observable(item.ChargeExpAccount);
+                _this.nonchargeCode = ko.observable(item.NonChargeExpAccount);
+                _this.chargeSuffix1 = ko.observable(item.ChargeSuffix1);
+                _this.chargeSuffix2 = ko.observable(item.ChargeSuffix2);
+                _this.chargeSuffix3 = ko.observable(item.ChargeSuffix3);
+                _this.nonChargeSuffix1 = ko.observable(item.NonChargeSuffix1);
+                _this.nonChargeSuffix2 = ko.observable(item.NonChargeSuffix2);
+                _this.nonChargeSuffix3 = ko.observable(item.NonChargeSuffix3);
                 _this.init();
                 return _this;
             }
             ExpAccountMapEditor.prototype.init = function () {
                 return __awaiter(this, void 0, void 0, function () {
-                    var types, acctList, acctList;
                     return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                this.showMessage("Loading GL Information...");
-                                if (!this.item.ExpOrg) return [3, 5];
-                                return [4, this.ajaxGet("api/Actions/AccountTypes/" + this.item.ExpOrg)];
-                            case 1:
-                                types = _a.sent();
-                                this.acctTypes(types);
-                                if (!this.item.ChargeExpAccountType) return [3, 3];
-                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.ChargeExpAccountType)];
-                            case 2:
-                                acctList = _a.sent();
-                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
-                                this.chgAccounts(acctList);
-                                _a.label = 3;
-                            case 3:
-                                if (!this.item.NonChargeExpAccountType) return [3, 5];
-                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.NonChargeExpAccountType)];
-                            case 4:
-                                acctList = _a.sent();
-                                acctList.forEach(function (a) { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; });
-                                this.nonAccounts(acctList);
-                                _a.label = 5;
-                            case 5:
-                                this.clearMessage();
-                                this.isReady(true);
-                                return [2];
-                        }
+                        this.showMessage("Loading GL Information...");
+                        this.clearMessage();
+                        this.isReady(true);
+                        return [2];
                     });
                 });
             };
@@ -1803,10 +1737,14 @@ var PE;
                             case 0:
                                 this.showMessage("Saving Mapping Details...");
                                 toSave = this.item;
-                                toSave.ChargeExpAccountType = this.selectedChgType();
-                                toSave.ChargeExpAccount = this.selectedChgAccount();
-                                toSave.NonChargeExpAccountType = this.selectedNonType();
-                                toSave.NonChargeExpAccount = this.selectedNonAccount();
+                                toSave.ChargeExpAccount = this.chargeCode();
+                                toSave.ChargeSuffix1 = this.chargeSuffix1();
+                                toSave.ChargeSuffix2 = this.chargeSuffix2();
+                                toSave.ChargeSuffix3 = this.chargeSuffix3();
+                                toSave.NonChargeExpAccount = this.nonchargeCode();
+                                toSave.NonChargeSuffix1 = this.nonChargeSuffix1();
+                                toSave.NonChargeSuffix2 = this.nonChargeSuffix2();
+                                toSave.NonChargeSuffix3 = this.nonChargeSuffix3();
                                 return [4, this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave)];
                             case 1:
                                 _a.sent();

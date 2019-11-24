@@ -753,27 +753,81 @@
                             </div>
                         </div>
                         <div class="form-group form-group-sm">
-                            <label class="col-md-4 control-label">Chargeable Expense Account Type</label>
-                            <div class="col-md-8" data-bind="if:isReady">
-                                <select class="form-control" data-bind="options:acctTypes,value:selectedChgType,optionsValue:'AccountTypeCode',optionsText:'AccountTypeDesc',optionsCaption:' -- Please Select -- '"></select>
-                            </div>
-                        </div>
-                        <div class="form-group form-group-sm">
                             <label class="col-md-4 control-label">Chargeable Expense Account</label>
                             <div class="col-md-8" data-bind="if:isReady">
-                                <select class="form-control" data-bind="options:chgAccounts,optionsText:'AccountDesc',optionsValue:'AccountCode',value:selectedChgAccount,optionsCaption:' -- Please Select -- '"></select>
+                                <input class="form-control" data-bind="value: chargeCode" />
                             </div>
                         </div>
                         <div class="form-group form-group-sm">
-                            <label class="col-md-4 control-label">Non Chargeable Expense Account Type</label>
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 1</label>
                             <div class="col-md-8" data-bind="if:isReady">
-                                <select class="form-control" data-bind="options:acctTypes,value:selectedNonType,optionsValue:'AccountTypeCode',optionsText:'AccountTypeDesc',optionsCaption:' -- Please Select -- '"></select>
+                                <select class="form-control" data-bind="value:chargeSuffix1">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-group form-group-sm">
-                            <label class="col-md-4 control-label">Non Chargeable Expense Account</label>
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 2</label>
                             <div class="col-md-8" data-bind="if:isReady">
-                                <select class="form-control" data-bind="options:nonAccounts,optionsText:'AccountDesc',optionsValue:'AccountCode',value:selectedNonAccount,optionsCaption:' -- Please Select -- '"></select>
+                                <select class="form-control" data-bind="value:chargeSuffix2">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 3</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:chargeSuffix3">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <input class="form-control" data-bind="value: nonchargeCode" />
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 1</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix1">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 2</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix2">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 3</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix3">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
                             </div>
                         </div>
                     </form>

@@ -383,6 +383,79 @@ namespace PE.Nominal.Web.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("TransferExpenses")]
+        public IActionResult TransferExpenses()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunTransferExpenses(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+
+        }
+
+        public async Task RunTransferExpenses(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    try
+                    {
+                        context.WriteLine($"Extracting Expenses for organization {org.PracName}.");
+                        var lines = await _actionService.TransferExpenseQuery(org.PracID, HangfireJobId: hangfireJobId);
+
+                        context.WriteLine($"Found {lines.Count()} lines for {org.PracName}.");
+                        if (lines == null || lines.Count() == 0)
+                            continue;
+
+                        // Cheat to deal with SQL not working off next batch, expecting 0
+                        if (_options.ProviderType.Equals("sql", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (var line in lines)
+                            {
+                                line.NomBatch = 0;
+                            }
+                        }
+                        context.WriteLine($"Preparing to send Post for organization {org.PracName}.");
+                        await _glProvider.PostExpenseCmd(org.PracID, lines, context);
+                        context.WriteLine($"Sent Post for organization {org.PracName}, flagging records now.");
+                        await _actionService.FlagExpensesTransferredCmd(org.PracID, hangfireJobId);
+                    }
+                    catch (Exception ex)
+                    {
+                        context.WriteLine($"Post Failed for organization {org.PracName}, unflagging records now.");
+                        await _actionService.UnFlagExpensesTransferredCmd(org.PracID, hangfireJobId);
+                        throw ex;
+                    }
+                    
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+
 
         [HttpPost]
         [Route("StatHours")]

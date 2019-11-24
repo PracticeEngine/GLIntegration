@@ -37,20 +37,41 @@ namespace PE.Nominal
         /// <summary>
         /// The Chargeable Nominal Expense Account 
         /// </summary>
-        public string ChargeExpAccountType { get; set; }
-
-        /// <summary>
-        /// The Chargeable Nominal Expense Account 
-        /// </summary>
         public string ChargeExpAccount { get; set; }
 
         /// <summary>
         /// The Non-Chargeable Nominal Expense Account 
         /// </summary>
-        public string NonChargeExpAccountType { get; set; }
-        /// <summary>
-        /// The Non-Chargeable Nominal Expense Account 
-        /// </summary>
         public string NonChargeExpAccount { get; set; }
+
+        /// <summary>
+        /// The Chargeable Nominal Expense Account Suffix 1
+        /// </summary>
+        public int ChargeSuffix1 { get; set; }
+
+        /// <summary>
+        /// The Chargeable Nominal Expense Account Suffix 2
+        /// </summary>
+        public int ChargeSuffix2 { get; set; }
+
+        /// <summary>
+        /// The Chargeable Nominal Expense Account Suffix 3
+        /// </summary>
+        public int ChargeSuffix3 { get; set; }
+
+        /// <summary>
+        /// The Non-Chargeable Nominal Expense Account Suffix 1
+        /// </summary>
+        public int NonChargeSuffix1 { get; set; }
+
+        /// <summary>
+        /// The Non-Chargeable Nominal Expense Account Suffix 2
+        /// </summary>
+        public int NonChargeSuffix2 { get; set; }
+
+        /// <summary>
+        /// The Non-Chargeable Nominal Expense Account Suffix 3
+        /// </summary>
+        public int NonChargeSuffix3 { get; set; }
     }
 }

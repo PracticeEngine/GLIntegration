@@ -823,5 +823,10 @@ namespace PE.Nominal.XeroGL
 
             return processedInvoices;
         }
+
+        public Task PostExpenseCmd(int Org, IEnumerable<ExpenseExtract> lines, PerformContext performContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

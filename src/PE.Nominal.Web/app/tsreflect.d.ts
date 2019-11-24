@@ -189,10 +189,14 @@ declare namespace PE.Nominal {
 		PracName: string | null;
 		ChargeCode: string | null;
 		ChargeName: string | null;
-		ChargeExpAccountType: string | null;
 		ChargeExpAccount: string | null;
-		NonChargeExpAccountType: string | null;
 		NonChargeExpAccount: string | null;
+        ChargeSuffix1: number | null;
+        ChargeSuffix2: number | null;
+        ChargeSuffix3: number | null;
+        NonChargeSuffix1: number | null;
+        NonChargeSuffix2: number | null;
+        NonChargeSuffix3: number | null;
 	}
 	interface IMissingExpenseStaff {
 		StaffIndex: number;

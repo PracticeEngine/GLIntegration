@@ -1479,64 +1479,30 @@
      */
     class ExpAccountMapEditor extends BaseVM {
         item: PE.Nominal.IMissingExpenseAccountMap;
-        acctTypes: KnockoutObservableArray<PE.Nominal.IGLType>;
-        selectedChgType: KnockoutObservable<string>;
-        selectedNonType: KnockoutObservable<string>;
-        chgAccounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
-        nonAccounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
-        selectedChgAccount: KnockoutObservable<string>;
-        selectedNonAccount: KnockoutObservable<string>;
+        chargeCode: KnockoutObservable<string>;
+        nonchargeCode: KnockoutObservable<string>;
+        chargeSuffix1: KnockoutObservable<number>;
+        chargeSuffix2: KnockoutObservable<number>;
+        chargeSuffix3: KnockoutObservable<number>;
+        nonChargeSuffix1: KnockoutObservable<number>;
+        nonChargeSuffix2: KnockoutObservable<number>;
+        nonChargeSuffix3: KnockoutObservable<number>;
         constructor(item: PE.Nominal.IMissingExpenseAccountMap) {
             super(false);
             this.item = item;
-            this.acctTypes = ko.observableArray([]);
-            this.selectedChgType = ko.observable(item.ChargeExpAccountType);
-            this.selectedNonType = ko.observable(item.NonChargeExpAccountType);
-            this.chgAccounts = ko.observableArray([]);
-            this.nonAccounts = ko.observableArray([]);
-            this.selectedChgAccount = ko.observable(item.ChargeExpAccount);
-            this.selectedNonAccount = ko.observable(item.NonChargeExpAccount);
-            this.toDispose.push(this.selectedChgType.subscribe(async (acctType) => {
-                if (this.item && this.item.ExpOrg && acctType) {
-                    this.showMessage("Loading Account List...");
-                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType);
-                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
-                    this.chgAccounts(acctList);
-                    this.clearMessage();
-                } else {
-                    this.chgAccounts([]);
-                }
-            }));
-            this.toDispose.push(this.selectedNonType.subscribe(async (acctType) => {
-                if (this.item && this.item.ExpOrg && acctType) {
-                    this.showMessage("Loading Account List...");
-                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + acctType);
-                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
-                    this.nonAccounts(acctList);
-                    this.clearMessage();
-                } else {
-                    this.nonAccounts([]);
-                }
-            }));
+            this.chargeCode = ko.observable(item.ChargeExpAccount);
+            this.nonchargeCode = ko.observable(item.NonChargeExpAccount);
+            this.chargeSuffix1 = ko.observable(item.ChargeSuffix1);
+            this.chargeSuffix2 = ko.observable(item.ChargeSuffix2);
+            this.chargeSuffix3 = ko.observable(item.ChargeSuffix3);
+            this.nonChargeSuffix1 = ko.observable(item.NonChargeSuffix1);
+            this.nonChargeSuffix2 = ko.observable(item.NonChargeSuffix2);
+            this.nonChargeSuffix3 = ko.observable(item.NonChargeSuffix3);
             this.init();
         }
 
         async init(): Promise<void> {
             this.showMessage("Loading GL Information...");
-            if (this.item.ExpOrg) {
-                let types = await this.ajaxGet<PE.Nominal.IGLType[]>("api/Actions/AccountTypes/" + this.item.ExpOrg);
-                this.acctTypes(types);
-                if (this.item.ChargeExpAccountType) {
-                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.ChargeExpAccountType);
-                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
-                    this.chgAccounts(acctList);
-                }
-                if (this.item.NonChargeExpAccountType) {
-                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.ExpOrg + "/" + this.item.NonChargeExpAccountType);
-                    acctList.forEach((a) => { a.AccountDesc = a.AccountCode + ' - ' + a.AccountDesc; })
-                    this.nonAccounts(acctList);
-                }
-            }
             this.clearMessage();
             this.isReady(true);
         }
@@ -1544,10 +1510,14 @@
         async saveMapping(): Promise<void> {
             this.showMessage("Saving Mapping Details...");
             let toSave: PE.Nominal.IMissingExpenseAccountMap = this.item;
-            toSave.ChargeExpAccountType = this.selectedChgType();
-            toSave.ChargeExpAccount = this.selectedChgAccount();
-            toSave.NonChargeExpAccountType = this.selectedNonType();
-            toSave.NonChargeExpAccount = this.selectedNonAccount();
+            toSave.ChargeExpAccount = this.chargeCode();
+            toSave.ChargeSuffix1 = this.chargeSuffix1();
+            toSave.ChargeSuffix2 = this.chargeSuffix2();
+            toSave.ChargeSuffix3 = this.chargeSuffix3();
+            toSave.NonChargeExpAccount = this.nonchargeCode();
+            toSave.NonChargeSuffix1 = this.nonChargeSuffix1();
+            toSave.NonChargeSuffix2 = this.nonChargeSuffix2();
+            toSave.NonChargeSuffix3 = this.nonChargeSuffix3();
             await this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave);
             this.clearMessage();
             ko.postbox.publish(CLOSE_EXPMAP_EDITOR, {});

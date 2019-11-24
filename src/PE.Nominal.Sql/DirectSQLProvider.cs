@@ -69,6 +69,21 @@ namespace PE.Nominal
         }
 
 
+        public async Task PostExpenseCmd(int Org, IEnumerable<ExpenseExtract> lines, PerformContext performContext)
+        {
+            // NOTE: journal parameter is ignored for this implementation
+
+
+            // this is wasteful, but prevents changing the existing underlying SP's while implementing a new Interface that works for non-SQL-to-SQL integrations
+            var batch = lines.Select(je => je.NomBatch).FirstOrDefault();
+            var result = new SqlParameter("@Result", System.Data.SqlDbType.Int)
+            {
+                Direction = System.Data.ParameterDirection.Output
+            };
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Post {0}, @Result", batch, result).ConfigureAwait(false);
+        }
+
+
         /// <summary>
         ///  Not IMplemented in this Version
         /// </summary>
