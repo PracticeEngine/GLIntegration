@@ -10,7 +10,7 @@ WHERE P.Posted = 0 AND M.ExpMapIndex IS NULL
 
 EXEC pe_NL_Post_Create_AccNums
 
-SELECT DISTINCT P.ExpOrg, O.PracName, C.ChargeCode, C.ChargeName, M.ExpMapIndex, M.ChargeExpAccount, M.NonChargeExpAccount
+SELECT DISTINCT P.ExpOrg, O.PracName, C.ChargeCode, C.ChargeName, M.ExpMapIndex, M.ChargeExpAccount, M.NonChargeExpAccount, M.ChargeSuffix1, M.ChargeSuffix2, M.ChargeSuffix3, M.NonChargeSuffix1, M.NonChargeSuffix2, M.NonChargeSuffix3
 FROM tblTranNominalPostExpenses P
 INNER JOIN tblTimeChargeCode C ON P.DisbCode = C.ChargeCode AND C.ChargeClass = 'DISB'
 INNER JOIN tblTranNominalExpMap M ON P.ExpOrg = M.ExpOrg AND P.DisbCode = M.DisbCode

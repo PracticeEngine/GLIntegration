@@ -1074,6 +1074,22 @@ namespace PE.Nominal.Web.Controllers
         }
 
 
+        [HttpGet]
+        [Route("ExpenseAccountMap")]
+        public async Task<IActionResult> ExpenseAccountMap()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseAccountsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
         #endregion
     }
 }

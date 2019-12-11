@@ -274,5 +274,10 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Account_Update {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}", ExpOrg, ChargeCode, ChargeExpAccount, NonChargeExpAccount, ChargeSuffix1, ChargeSuffix2, ChargeSuffix3, NonChargeSuffix1, NonChargeSuffix2, NonChargeSuffix3).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseAccountsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseAccountMap>("pe_NL_Expense_Accounts").ConfigureAwait(false);
+            return results;
+        }
     }
 }

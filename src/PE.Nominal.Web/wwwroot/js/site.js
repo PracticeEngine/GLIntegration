@@ -1796,7 +1796,7 @@ var PE;
                                     }),
                                     columns: [
                                         { title: "Staff ID" },
-                                        { title: "Staff Code" },
+                                        { title: "Staff Reference" },
                                         { title: "Staff Name" },
                                         { name: "item", visible: false }
                                     ]
@@ -1813,6 +1813,74 @@ var PE;
             return MissingExpenseStaff;
         }(BaseVM));
         Nominal.MissingExpenseStaff = MissingExpenseStaff;
+        var ExpMap = (function (_super) {
+            __extends(ExpMap, _super);
+            function ExpMap() {
+                var _this = this;
+                console.info("ExpMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            ExpMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var _this = this;
+                    var data, table;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Expense Code Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/ExpenseAccountMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.PracName,
+                                            item.ChargeCode,
+                                            item.ChargeName,
+                                            item.ChargeExpAccount,
+                                            item.NonChargeExpAccount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "Expense Code" },
+                                        { title: "Expense Name" },
+                                        { title: "Chargeable Account" },
+                                        { title: "Non-Chargeable Account" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ExpAccountMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExpMap;
+        }(BaseVM));
+        Nominal.ExpMap = ExpMap;
     })(Nominal = PE.Nominal || (PE.Nominal = {}));
 })(PE || (PE = {}));
 ko.bindingHandlers.bsmodal = {

@@ -237,5 +237,9 @@ namespace PE.Nominal
         {
             await nominalDAL.UpdateExpenseAccountMappingCmd(item.ExpOrg, item.ChargeCode, item.ChargeExpAccount, item.NonChargeExpAccount, item.ChargeSuffix1, item.ChargeSuffix2, item.ChargeSuffix3, item.NonChargeSuffix1, item.NonChargeSuffix2, item.NonChargeSuffix3).ConfigureAwait(false);
         }
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseAccountsQuery()
+        {
+            return await nominalDAL.ExpenseAccountsQuery().ConfigureAwait(false);
+        }
     }
 }

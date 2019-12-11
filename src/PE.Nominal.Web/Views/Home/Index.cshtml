@@ -881,3 +881,22 @@
         </div>
     </div>
 </template>
+<template id="body-ExpMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Expense Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ExpenseAccountMap-Editor'-->
+    <!-- /ko -->
+</template>

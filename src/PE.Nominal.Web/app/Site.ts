@@ -1556,7 +1556,7 @@
                 }),
                 columns: [
                     { title: "Staff ID" },
-                    { title: "Staff Code" },
+                    { title: "Staff Reference" },
                     { title: "Staff Name" },
                     { name: "item", visible: false }
                 ]
@@ -1568,7 +1568,65 @@
             this.showPage("ExpensePost");
         }
     }
+    /**
+     * Missing Expense Account Mappings VM
+     */
+    export class ExpMap extends BaseVM {
+        editor: KnockoutObservable<ExpAccountMapEditor>;
+        constructor() {
+            console.info("ExpMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
 
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Expense Code Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseAccountMap[]>("api/Actions/ExpenseAccountMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.PracName,
+                        item.ChargeCode,
+                        item.ChargeName,
+                        item.ChargeExpAccount,
+                        item.NonChargeExpAccount,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "Expense Code" },
+                    { title: "Expense Name" },
+                    { title: "Chargeable Account" },
+                    { title: "Non-Chargeable Account" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ExpAccountMapEditor(item));
+            });
+            this.clearMessage();
+        }
+    }
 }
 
 // Knockout Binding Handlers
