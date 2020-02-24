@@ -38,5 +38,25 @@ namespace PE.Nominal
         /// Sales Account Code
         /// </summary>
         public string AccountCode { get; set; }
+
+        /// <summary>
+        /// Tracking Category 1 Name
+        /// </summary>
+        public string TrackingName1 { get; set; }
+
+        /// <summary>
+        /// Tracking Category 1 Option
+        /// </summary>
+        public string TrackingOption1 { get; set; }
+
+        /// <summary>
+        /// Tracking Category 2 Name
+        /// </summary>
+        public string TrackingName2 { get; set; }
+
+        /// <summary>
+        /// Tracking Category 2 Option
+        /// </summary>
+        public string TrackingOption2 { get; set; }
     }
 }

@@ -683,8 +683,30 @@ namespace PE.Nominal.XeroGL
                             xeroLine.TaxAmount = line.VATAmount;
                             xeroLine.TaxType = line.TaxCode;
                             xeroLine.AccountCode = line.AccountCode;
+                            xeroLine.Tracking = new Xero.Api.Core.Model.ItemTracking();
+
+                            if (!String.IsNullOrEmpty(line.TrackingName1))
+                            {
+                                Xero.Api.Core.Model.ItemTrackingCategory c1 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                {
+                                    Name = line.TrackingName1,
+                                    Option = line.TrackingOption1
+                                };
+                                xeroLine.Tracking.Add(c1);
+                            }
+
+                            if (!String.IsNullOrEmpty(line.TrackingName2))
+                            {
+                                Xero.Api.Core.Model.ItemTrackingCategory c2 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                {
+                                    Name = line.TrackingName2,
+                                    Option = line.TrackingOption2
+                                };
+                                xeroLine.Tracking.Add(c2);
+                            }
 
                             xeroInv.LineItems.Add(xeroLine);
+
                         }
 
                         xeroInvoices.Add(xeroInv);
@@ -716,6 +738,27 @@ namespace PE.Nominal.XeroGL
                             xeroLine.TaxAmount = line.VATAmount * -1;
                             xeroLine.TaxType = line.TaxCode;
                             xeroLine.AccountCode = line.AccountCode;
+                            xeroLine.Tracking = new Xero.Api.Core.Model.ItemTracking();
+
+                            if (!String.IsNullOrEmpty(line.TrackingName1))
+                            {
+                                Xero.Api.Core.Model.ItemTrackingCategory c1 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                {
+                                    Name = line.TrackingName1,
+                                    Option = line.TrackingOption1
+                                };
+                                xeroLine.Tracking.Add(c1);
+                            }
+
+                            if (!String.IsNullOrEmpty(line.TrackingName2))
+                            {
+                                Xero.Api.Core.Model.ItemTrackingCategory c2 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                {
+                                    Name = line.TrackingName2,
+                                    Option = line.TrackingOption2
+                                };
+                                xeroLine.Tracking.Add(c2);
+                            }
 
                             xeroCn.LineItems.Add(xeroLine);
                         }
