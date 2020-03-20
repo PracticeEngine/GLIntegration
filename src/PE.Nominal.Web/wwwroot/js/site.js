@@ -610,6 +610,121 @@ var PE;
             return NLMap;
         }(BaseVM));
         Nominal.NLMap = NLMap;
+        var ImportMapEditor = (function (_super) {
+            __extends(ImportMapEditor, _super);
+            function ImportMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.disbCodes = ko.observableArray([]);
+                _this.selectedDisb = ko.observable(item.DisbCode);
+                _this.init();
+                return _this;
+            }
+            ImportMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var disbs;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading GL Information...");
+                                return [4, this.ajaxGet("api/Actions/DisbCodes")];
+                            case 1:
+                                disbs = _a.sent();
+                                this.disbCodes(disbs);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ImportMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = {
+                                    DisbMapIndex: this.item.DisbMapIndex,
+                                    DisbCode: this.selectedDisb() || ""
+                                };
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateImportMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ImportMapEditor;
+        }(BaseVM));
+        var DisbMap = (function (_super) {
+            __extends(DisbMap, _super);
+            function DisbMap() {
+                var _this = this;
+                console.info("NLImportMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_MAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            DisbMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var _this = this;
+                    var data, table;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Import Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/NLImportMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.OrgName,
+                                            item.NLAcc,
+                                            item.DisbName,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "GL Account" },
+                                        { title: "Disbursement Code" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ImportMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return DisbMap;
+        }(BaseVM));
+        Nominal.DisbMap = DisbMap;
         var Journal = (function (_super) {
             __extends(Journal, _super);
             function Journal() {
@@ -833,6 +948,169 @@ var PE;
             return Journal;
         }(BaseVM));
         Nominal.Journal = Journal;
+        var Integrationdetails = (function (_super) {
+            __extends(Integrationdetails, _super);
+            function Integrationdetails() {
+                var _this = this;
+                console.info("Integrationdetails");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.children = ko.observableArray([]);
+                _this.selectedItem = ko.observable(undefined);
+                _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
+                    if (val && val.filter) {
+                        val.group.NLPeriodIndex = _this.SelectedPeriod().NLPeriodIndex;
+                        _this.loadItem(val);
+                    }
+                    else {
+                        if (_this.table) {
+                            $("#gltable").DataTable().destroy();
+                            $("#gltable").empty();
+                            _this.table = null;
+                        }
+                    }
+                }));
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    function buildItem(from, level) {
+                        var x = {};
+                        for (var i = 0; i <= level; i++) {
+                            var fld = groups[i].unq;
+                            x[fld] = from[fld];
+                        }
+                        return x;
+                    }
+                    function buildGroups(grps, level) {
+                        if (level === void 0) { level = 0; }
+                        var grpSettings = groups[level];
+                        var distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                            return g[grpSettings.unq];
+                        }));
+                        return distValues.map(function (o) {
+                            var matches = grps.filter(function (g) {
+                                return g[grpSettings.unq] === o;
+                            });
+                            return {
+                                filter: grpSettings.filter,
+                                htmlSpace: "&nbsp;".repeat(level),
+                                title: matches[0][grpSettings.name].toString(),
+                                group: buildItem(matches[0], level),
+                                children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                                expanded: ko.observable(false)
+                            };
+                        });
+                    }
+                    var allGroups, groups;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Group...");
+                                return [4, this.ajaxGet("api/Actions/DetailGroups/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                allGroups = _a.sent();
+                                groups = [
+                                    { unq: "NLOrg", name: "OrgName", filter: false },
+                                    { unq: "NLSource", name: "NLSource", filter: false },
+                                    { unq: "NLSection", name: "NLSection", filter: false },
+                                    { unq: "NLAccount", name: "NLAccount", filter: true },
+                                    { unq: "NLOffice", name: "OfficeName", filter: true },
+                                    { unq: "NLService", name: "ServiceName", filter: true },
+                                    { unq: "NLDept", name: "DepartmentName", filter: true },
+                                    { unq: "NLPartner", name: "PartnerName", filter: true }
+                                ];
+                                this.children(buildGroups(allGroups));
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            Integrationdetails.prototype.toggleItem = function (item) {
+                if (item) {
+                    item.expanded(!item.expanded());
+                }
+            };
+            Integrationdetails.prototype.loadItem = function (item) {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Group...");
+                                return [4, this.ajaxSendReceive("api/Actions/DetailList", item.group)];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NLDate,
+                                            item.TransTypeDescription,
+                                            item.TransRefAlpha,
+                                            item.Amount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        {
+                                            title: "Date",
+                                            render: function (val) {
+                                                return moment(val).format("MMM DD YYYY");
+                                            }
+                                        },
+                                        { title: "Description" },
+                                        { title: "Reference" },
+                                        {
+                                            title: "Amount",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            Integrationdetails.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            Integrationdetails.prototype.report = function () {
+                window.open(this.getBaseUrl() + "api/Reports/JournalReport");
+            };
+            return Integrationdetails;
+        }(BaseVM));
+        Nominal.Integrationdetails = Integrationdetails;
         var RepostJournal = (function (_super) {
             __extends(RepostJournal, _super);
             function RepostJournal() {
@@ -907,33 +1185,15 @@ var PE;
                                             }
                                         },
                                         { name: "item", visible: false }
-                                    ],
-                                    columnDefs: [{
-                                            targets: -1,
-                                            data: null,
-                                            defaultContent: "<button class=\"journal-report btn btn-default btn-xs\">Report</button><button class=\"journal-repost btn btn-primary btn-xs\">Repost</button><button class=\"journal-export btn btn-primary btn-xs\">Export</button>"
-                                        }]
+                                    ]
                                 });
-                                $("#gltable tbody").on("click", ".journal-report", function () {
-                                    var data = _this.table.row($(_this).parents('tr')).data();
-                                    console.log("report", data);
-                                    window.open(_this.getBaseUrl() + ("api/Reports/ReprintJournalReport?batch=" + data.NomBatch));
-                                });
-                                $("#gltable tbody").on("click", ".journal-export", function () { return __awaiter(_this, void 0, void 0, function () {
-                                    var data;
-                                    return __generator(this, function (_a) {
-                                        data = this.table.row($(this).parents('tr')).data();
-                                        console.log("export", data);
-                                        window.open(this.getBaseUrl() + ("api/Actions/" + data.NomBatch + "/Journal.csv"));
-                                        return [2];
-                                    });
-                                }); });
-                                $("#gltable tbody").on("click", ".journal-repost", function () { return __awaiter(_this, void 0, void 0, function () {
-                                    var data;
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
                                             case 0:
-                                                data = this.table.row($(this).parents('tr')).data();
+                                                arrData = this.table.row(indexes).data();
+                                                data = arrData[arrData.length - 1];
                                                 console.log("repost", data);
                                                 if (!confirm("Repost batch #" + data.NomBatch + "?")) return [3, 2];
                                                 this.showMessage("Reposting Journal...");
@@ -975,6 +1235,253 @@ var PE;
             return RepostJournal;
         }(BaseVM));
         Nominal.RepostJournal = RepostJournal;
+        var ReprintJournal = (function (_super) {
+            __extends(ReprintJournal, _super);
+            function ReprintJournal() {
+                var _this = this;
+                console.info("ReprintJournal");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.startDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.endDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.toDispose.push(_this.startDate, _this.endDate);
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    var _this = this;
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (postPeriod == undefined) {
+                                    return [2];
+                                }
+                                this.showMessage("Loading Available Journals for Reprinting...");
+                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    searching: false,
+                                    paging: false,
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NomBatch,
+                                            item.NumLines,
+                                            item.Debits,
+                                            item.Credits,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Batch No." },
+                                        { title: "Entries" },
+                                        {
+                                            title: "Debits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        {
+                                            title: "Credits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
+                                    return __generator(this, function (_a) {
+                                        arrData = this.table.row(indexes).data();
+                                        data = arrData[arrData.length - 1];
+                                        console.log("reprint", data);
+                                        if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                                            window.open(this.getBaseUrl() + ("api/Reports/ReprintJournalReport?batch=" + data.NomBatch));
+                                        }
+                                        return [2];
+                                    });
+                                }); });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ReprintJournal.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ReprintJournal;
+        }(BaseVM));
+        Nominal.ReprintJournal = ReprintJournal;
+        var ReprintJournalDetails = (function (_super) {
+            __extends(ReprintJournalDetails, _super);
+            function ReprintJournalDetails() {
+                var _this = this;
+                console.info("ReprintJournal");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.Orgs = ko.observableArray([]);
+                _this.SelectedOrg = ko.observable(null);
+                _this.SelectedSource = ko.observable(null);
+                _this.startDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.endDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.toDispose.push(_this.startDate, _this.endDate);
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    var _this = this;
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (postPeriod == undefined) {
+                                    return [2];
+                                }
+                                this.showMessage("Loading Available Journals for Reprinting...");
+                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    searching: false,
+                                    paging: false,
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NomBatch,
+                                            item.NumLines,
+                                            item.Debits,
+                                            item.Credits,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Batch No." },
+                                        { title: "Entries" },
+                                        {
+                                            title: "Debits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        {
+                                            title: "Credits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
+                                    return __generator(this, function (_a) {
+                                        arrData = this.table.row(indexes).data();
+                                        data = arrData[arrData.length - 1];
+                                        console.log("reprint", data);
+                                        if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                                            window.open(this.getBaseUrl() + ("api/Reports/ReprintJournalDetails?batch=" + data.NomBatch + "&org=" + this.SelectedOrg().PracID + "&source=" + this.SelectedSource()));
+                                        }
+                                        return [2];
+                                    });
+                                }); });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ReprintJournalDetails.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods, orgs;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods and Orgs...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                return [4, this.ajaxGet("api/Actions/OrgList")];
+                            case 2:
+                                orgs = _a.sent();
+                                this.Orgs(orgs);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ReprintJournalDetails;
+        }(BaseVM));
+        Nominal.ReprintJournalDetails = ReprintJournalDetails;
         var BankRec = (function (_super) {
             __extends(BankRec, _super);
             function BankRec() {
@@ -1006,6 +1513,37 @@ var PE;
             return BankRec;
         }(BaseVM));
         Nominal.BankRec = BankRec;
+        var CostingUpdate = (function (_super) {
+            __extends(CostingUpdate, _super);
+            function CostingUpdate() {
+                var _this = this;
+                console.info("CostingUpdate");
+                _this = _super.call(this) || this;
+                var datesData = _this.getSession("SelectedDates");
+                _this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+                _this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+                return _this;
+            }
+            CostingUpdate.prototype.run = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Updating Costing Data...");
+                                return [4, this.ajaxSendOnly("api/Actions/CostingUpdate", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Updated Costing Data successfully");
+                                this.goHome();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return CostingUpdate;
+        }(BaseVM));
+        Nominal.CostingUpdate = CostingUpdate;
         var BankRecPost = (function (_super) {
             __extends(BankRecPost, _super);
             function BankRecPost() {

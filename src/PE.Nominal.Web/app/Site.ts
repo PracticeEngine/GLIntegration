@@ -551,6 +551,107 @@
         expanded: KnockoutObservable<boolean>;
     }
 
+    interface DetailNode {
+        group: Partial<PE.Nominal.IDetailGroup>;
+        title: string;
+        children: GroupNode[];
+        filter: boolean;
+        htmlSpace: string;
+        expanded: KnockoutObservable<boolean>;
+    }
+
+
+    /**
+     * Class for Editing an Import Mapping
+     */
+    class ImportMapEditor extends BaseVM {
+        item: PE.Nominal.IImportMap;
+        disbCodes: KnockoutObservableArray<PE.Nominal.IDisbCode>;
+        selectedDisb: KnockoutObservable<string>;
+        constructor(item: PE.Nominal.IImportMap) {
+            super(false);
+            this.item = item;
+            this.disbCodes = ko.observableArray([]);
+            this.selectedDisb = ko.observable(item.DisbCode);
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            let disbs = await this.ajaxGet<PE.Nominal.IDisbCode[]>("api/Actions/DisbCodes");
+            this.disbCodes(disbs);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IImportMapUpdate = {
+                DisbMapIndex: this.item.DisbMapIndex,
+                DisbCode: this.selectedDisb() || ""
+            };
+            await this.ajaxSendOnly("api/Actions/UpdateImportMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+        }
+    }
+
+    /**
+     * Import Account Mappings VM
+     */
+    export class DisbMap extends BaseVM {
+        editor: KnockoutObservable<ImportMapEditor>;
+        constructor() {
+            console.info("NLImportMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_MAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Import Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IImportMap[]>("api/Actions/NLImportMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.OrgName,
+                        item.NLAcc,
+                        item.DisbName,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "GL Account" },
+                    { title: "Disbursement Code" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ImportMapEditor(item));
+            });
+            this.clearMessage();
+        }
+    }
+
     /**
      * Journal Posting VM
      */
@@ -747,6 +848,157 @@
     }
 
     /**
+     * Integration Details VM
+     */
+    export class Integrationdetails extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        children: KnockoutObservableArray<DetailNode>;
+        selectedItem: KnockoutObservable<DetailNode>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("Integrationdetails");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.children = ko.observableArray([]);
+            this.selectedItem = ko.observable(undefined);
+            this.toDispose.push(this.selectedItem.subscribe((val) => {
+                if (val && val.filter) {
+                    val.group.NLPeriodIndex = this.SelectedPeriod().NLPeriodIndex;
+                    this.loadItem(val);
+                } else {
+                    // Wipe out existing
+                    if (this.table) {
+                        // Wipe out existing
+                        $("#gltable").DataTable().destroy();
+                        $("#gltable").empty();
+                        this.table = null;
+                    }
+                }
+            }));
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                this.showMessage("Loading Group...");
+                let allGroups = await this.ajaxGet<PE.Nominal.IDetailGroup[]>("api/Actions/DetailGroups/" + postPeriod.NLPeriodIndex.toString());
+
+                // Group by Org, Source, Section, [Account, Office, Service, Department, Partner] (selectable items in [])
+                let groups: Array<{ unq: keyof PE.Nominal.IDetailGroup, name: keyof PE.Nominal.IDetailGroup, filter: boolean }> = [
+                    { unq: "NLOrg", name: "OrgName", filter: false },
+                    { unq: "NLSource", name: "NLSource", filter: false },
+                    { unq: "NLSection", name: "NLSection", filter: false },
+                    { unq: "NLAccount", name: "NLAccount", filter: true },
+                    { unq: "NLOffice", name: "OfficeName", filter: true },
+                    { unq: "NLService", name: "ServiceName", filter: true },
+                    { unq: "NLDept", name: "DepartmentName", filter: true },
+                    { unq: "NLPartner", name: "PartnerName", filter: true }
+                ];
+
+                // function to build partial item based on level
+                function buildItem(from: PE.Nominal.IDetailGroup, level: number): Partial<PE.Nominal.IDetailGroup> {
+                    let x = {};
+                    for (let i = 0; i <= level; i++) {
+                        let fld = groups[i].unq;
+                        x[fld] = from[fld];
+                    }
+                    return x;
+                }
+
+
+                // function to recursively build groups
+                function buildGroups(grps: PE.Nominal.IDetailGroup[], level: number = 0): DetailNode[] {
+                    let grpSettings = groups[level];
+                    let distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                        return g[grpSettings.unq];
+                    }));
+                    return distValues.map(function (o) {
+                        let matches = grps.filter(function (g) {
+                            return g[grpSettings.unq] === o;
+                        });
+                        return {
+                            filter: grpSettings.filter,
+                            htmlSpace: "&nbsp;".repeat(level),
+                            title: matches[0][grpSettings.name].toString(),
+                            group: buildItem(matches[0], level),
+                            children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                            expanded: ko.observable(false)
+                        };
+                    });
+                }
+                // Call buildGroups to construct the nexted groups 
+                this.children(buildGroups(allGroups));
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        toggleItem(item: DetailNode): void {
+            if (item) {
+                item.expanded(!item.expanded());
+            }
+        }
+
+        async loadItem(item: DetailNode): Promise<void> {
+            this.showMessage("Loading Group...");
+            let data = await this.ajaxSendReceive<PE.Nominal.IDetailLine[], Partial<PE.Nominal.IDetailGroup>>("api/Actions/DetailList", item.group);
+            if (this.table) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+                this.table = null;
+            }
+
+            this.table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.NLDate,
+                        item.TransTypeDescription,
+                        item.TransRefAlpha,
+                        item.Amount,
+                        item
+                    ];
+                }),
+                columns: [
+                    {
+                        title: "Date",
+                        render: function (val) {
+                            return moment(val).format("MMM DD YYYY");
+                        }
+                    },
+                    { title: "Description" },
+                    { title: "Reference" },
+                    {
+                        title: "Amount",
+                        className: "text-right",
+                        render: function (num) {
+                            num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                            return "$ " + parseFloat(num).toFixed(2);
+                        }
+                    },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+
+        }
+
+        report(): void {
+            window.open(this.getBaseUrl() + "api/Reports/JournalReport");
+        }
+    }
+
+    /**
      * Journal RePosting VM
      */
     export class RepostJournal extends BaseVM {
@@ -821,33 +1073,12 @@
                             }
                         },
                         { name: "item", visible: false }
-                    ],
-                    columnDefs: [{
-                        targets: -1,
-                        data: null,
-                        defaultContent: `<button class="journal-report btn btn-default btn-xs">Report</button><button class="journal-repost btn btn-primary btn-xs">Repost</button><button class="journal-export btn btn-primary btn-xs">Export</button>`
-                    }]
+                    ]
                 });
-                //.on("select.dt", async (e: JQueryEventObject, dt: any, type: string, indexes: Array<any>) => {
-                //    // On Row Select
-                //    let arrData = <Array<any>>this.table.row(indexes).data();
-                //    let item = arrData[arrData.length - 1];
-                //    if (confirm("Repost batch #" + item.NomBatch + "?")) {
-                //        await this.ajaxSendOnly("api/Actions/RepostJournal/" + item.NomBatch.toString(), {});
-                //    }
-                //});
-                $("#gltable tbody").on("click", ".journal-report", () => {
-                    var data = <PE.Nominal.IJournalRepostBatch> this.table.row($(this).parents('tr')).data();
-                    console.log("report", data);
-                    window.open(this.getBaseUrl() + `api/Reports/ReprintJournalReport?batch=${data.NomBatch}`);
-                });
-                $("#gltable tbody").on("click", ".journal-export", async () => {
-                    var data = <PE.Nominal.IJournalRepostBatch>this.table.row($(this).parents('tr')).data();
-                    console.log("export", data);
-                    window.open(this.getBaseUrl() + `api/Actions/${data.NomBatch}/Journal.csv`);
-                });
-                $("#gltable tbody").on("click", ".journal-repost", async () => {
-                    var data = <PE.Nominal.IJournalRepostBatch> this.table.row($(this).parents('tr')).data();
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
                     console.log("repost", data);
                     if (confirm("Repost batch #" + data.NomBatch + "?")) {
                         this.showMessage("Reposting Journal...");
@@ -864,6 +1095,222 @@
             this.showMessage("Loading Periods...");
             let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
             this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+    }
+
+    /**
+     * Journal RePrinting VM
+     */
+    export class ReprintJournal extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        startDate: KnockoutComputed<string>;
+        endDate: KnockoutComputed<string>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ReprintJournal");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.startDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.endDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.toDispose.push(this.startDate, this.endDate);
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                if (postPeriod == undefined) {
+                    return;
+                }
+                this.showMessage("Loading Available Journals for Reprinting...");
+                let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
+                if (this.table) {
+                    // Wipe out existing
+                    $("#gltable").DataTable().destroy();
+                    $("#gltable").empty();
+                    this.table = null;
+                }
+
+                this.table = $("#gltable").DataTable({
+                    select: {
+                        style: "single",
+                        info: false
+                    },
+                    searching: false,
+                    paging: false,
+                    data: data.map(function (item) {
+                        return [
+                            item.NomBatch,
+                            item.NumLines,
+                            item.Debits,
+                            item.Credits,
+                            item
+                        ];
+                    }),
+                    columns: [
+                        { title: "Batch No." },
+                        { title: "Entries" },
+                        {
+                            title: "Debits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        {
+                            title: "Credits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        { name: "item", visible: false }
+                    ]
+                });
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
+                    console.log("reprint", data);
+                    if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                        window.open(this.getBaseUrl() + `api/Reports/ReprintJournalReport?batch=${data.NomBatch}`);
+                    }
+                });
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+    }
+
+    /**
+     * Journal RePrinting Details VM
+     */
+    export class ReprintJournalDetails extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        Orgs: KnockoutObservableArray<PE.Nominal.INomOrganisation>;
+        SelectedOrg: KnockoutObservable<PE.Nominal.INomOrganisation>;
+        SelectedSource: KnockoutObservable<string>;
+        startDate: KnockoutComputed<string>;
+        endDate: KnockoutComputed<string>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ReprintJournal");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.Orgs = ko.observableArray([]);
+            this.SelectedOrg = ko.observable(null);
+            this.SelectedSource = ko.observable(null);
+            this.startDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.endDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.toDispose.push(this.startDate, this.endDate);
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                if (postPeriod == undefined) {
+                    return;
+                }
+                this.showMessage("Loading Available Journals for Reprinting...");
+                let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
+                if (this.table) {
+                    // Wipe out existing
+                    $("#gltable").DataTable().destroy();
+                    $("#gltable").empty();
+                    this.table = null;
+                }
+
+                this.table = $("#gltable").DataTable({
+                    select: {
+                        style: "single",
+                        info: false
+                    },
+                    searching: false,
+                    paging: false,
+                    data: data.map(function (item) {
+                        return [
+                            item.NomBatch,
+                            item.NumLines,
+                            item.Debits,
+                            item.Credits,
+                            item
+                        ];
+                    }),
+                    columns: [
+                        { title: "Batch No." },
+                        { title: "Entries" },
+                        {
+                            title: "Debits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        {
+                            title: "Credits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        { name: "item", visible: false }
+                    ]
+                });
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
+                    console.log("reprint", data);
+                    if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                        window.open(this.getBaseUrl() + `api/Reports/ReprintJournalDetails?batch=${data.NomBatch}&org=${this.SelectedOrg().PracID}&source=${this.SelectedSource()}`);
+                    }
+                });
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods and Orgs...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            let orgs = await this.ajaxGet<PE.Nominal.INomOrganisation[]>("api/Actions/OrgList");
+            this.Orgs(orgs);
             this.clearMessage();
             this.isReady(true);
         }
@@ -893,6 +1340,28 @@
         }
     }
 
+    /**
+     * Update Costing VM
+     */
+    export class CostingUpdate extends BaseVM {
+        startDate: string;
+        endDate: string;
+        constructor() {
+            console.info("CostingUpdate");
+            super();
+            let datesData = this.getSession<PE.Nominal.ISelectedDates>("SelectedDates");
+            this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+        }
+
+        async run(): Promise<void> {
+            this.showMessage("Updating Costing Data...");
+            await this.ajaxSendOnly("api/Actions/CostingUpdate", {});
+            this.clearMessage();
+            alert("Updated Costing Data successfully");
+            this.goHome();
+        }
+    }
     /**
      * BankRec RePosting VM
      */

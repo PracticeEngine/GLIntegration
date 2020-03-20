@@ -320,7 +320,7 @@
         <div class="col-md-12">
             <div class="panel panel-primary panel-headroom">
                 <div class="panel-heading">
-                    Repost Journal
+                    Repost Bank Reconcilliation
                 </div>
                 <div class="panel-body">
                     <form class="form-horizontal">
@@ -672,6 +672,64 @@
     <!-- ko template:'nested-Map-Editor'-->
     <!-- /ko -->
 </template>
+<template id="nested-ImportMap-Editor">
+    <div class="modal fade" tabindex="-1" role="dialog" data-bind="bsmodal:editor">
+        <div class="modal-dialog" role="document" data-bind="if:editor">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Mapping</h4>
+                </div>
+                <div class="modal-body" data-bind="with:editor">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Organisation</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.OrgName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Account</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.NLAcc"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Disbursement Code</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:disbCodes,value:selectedDisb,optionsValue:'ChargeCode',optionsText:'ChargeName',optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" data-bind="with:editor">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bind="click:saveMapping">Save Mapping</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</template>
+<template id="body-DisbMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Import Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ImportMap-Editor'-->
+    <!-- /ko -->
+</template>
 <template id="body-MTD">
     <div class="row">
         <div class="col-md-offset-3 col-md-6">
@@ -899,4 +957,169 @@
     </div>
     <!-- ko template:'nested-ExpenseAccountMap-Editor'-->
     <!-- /ko -->
+</template>
+<template id="body-ReprintJournal">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Reprint Journal
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to reprint.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-CostingUpdate">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Update Costing Data
+                </div>
+                <div class="panel-body">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>The update will put a copy of all Clients Services and Jobs into Dimensions Costing System.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run">Update Costing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-ReprintJournalDetails">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Reprint Journal Details
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select Organisation</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Orgs,value:SelectedOrg,optionsCaption:'Select an Organisation...', optionsText:'PracName'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select Source</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:SelectedSource,optionsCaption:'Select a Source...'">
+                                    <option value="DRS">Debtors and Sales</option>
+                                    <option value="INT">Inter-Company</option>
+                                    <option value="LOD">Banking</option>
+                                    <option value="WIP">Work In Progress</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to reprint.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-Integrationdetails">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Integration Details
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
+                                <div>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-info" data-bind="click:report">Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>

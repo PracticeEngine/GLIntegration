@@ -17,7 +17,36 @@ declare namespace PE.Nominal {
 		LodgeBatch: number;
 		NumDep: number;
 		ValDep: number;
-	}
+    }
+    interface IDetailGroup {
+        NLPeriodIndex: number;
+        NLOrg: number;
+        NLSource: string | null;
+        NLSection: string | null;
+        NLAccount: string | null;
+        NLOffice: string | null;
+        NLDept: string | null;
+        NLService: string | null;
+        NLPartner: number | null;
+        OrgName: string | null;
+        ServiceName: string | null;
+        OfficeName: string | null;
+        PartnerName: string | null;
+        DepartmentName: string | null;
+    }
+    interface IDetailLine {
+        NLIndex: number;
+        NLPeriodIndex: number;
+        NLOrg: number;
+        NLSource: string | null;
+        NLSection: string | null;
+        NLAccount: string | null;
+        NLDate: string | null;
+        NomPostAcc: string | null;
+        TransRefAlpha: string | null;
+        Amount: number | null;
+        TransTypeDescription: string | null;
+    }
 	interface IDisbCode {
 		ChargeCode: string | null;
 		ChargeName: string | null;
@@ -90,7 +119,21 @@ declare namespace PE.Nominal {
 	interface IGLType {
 		AccountTypeCode: string | null;
 		AccountTypeDesc: string | null;
-	}
+    }
+    interface IImportMap {
+        DisbCode: string | null;
+        DisbName: string | null;
+        DisbMapIndex: number;
+        NLOrg: number;
+        NLIdx: number;
+        NLAcc: string | null;
+        OrgName: string | null;
+        NumBlank: number;
+    }
+    interface IImportMapUpdate {
+        DisbCode: string | null;
+        DisbMapIndex: number;
+    }
 	interface IJournalExtract extends PE.Nominal.IMapBase {
 		NomBatch: number;
 		NomNarrative: string | null;

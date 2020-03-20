@@ -130,6 +130,11 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Post_Create {0}", PeriodIndex).ConfigureAwait(false);
         }
 
+        public async Task CostingUpdateCmd()
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Costing_Update").ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<MissingMap>> MissingMappingsQuery()
         {
             var results = await context.Database.SqlQueryAsync<MissingMap>("pe_NL_Missing_Map").ConfigureAwait(false);
@@ -152,6 +157,29 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<GLMapping>("pe_NL_Mapping_List").ConfigureAwait(false);
             return results;
         }
+        public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<ImportMap>("pe_NL_DisbMap_Details").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task SaveImportMappingCmd(int MapIndex, string AccountCode)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_DisbMap_Line_Update {0}, {1}", MapIndex, AccountCode).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailGroup>> DetailGroupsQuery(int PeriodIndex)
+        {
+            var results = await context.Database.SqlQueryAsync<DetailGroup>("pe_NL_Detail_Groups {0}", PeriodIndex).ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<DetailLine>> DetailListQuery(int NLOrg, string NLSource, string NLSection, string NLAccount, string NLOffice, string NLService, int? NLPartner, string NLDept, int PeriodIndex)
+        {
+            var results = await context.Database.SqlQueryAsync<DetailLine>("pe_NL_Detail_Lines {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}", NLOrg, NLSource, NLSection, NLAccount, NLOffice, NLService, NLPartner, NLDept, PeriodIndex).ConfigureAwait(false);
+            return results;
+        }
+
         public async Task<IEnumerable<JournalGroup>> JournalGroupsQuery() 
         {
             var results = await context.Database.SqlQueryAsync<JournalGroup>("pe_NL_Journal_Groups").ConfigureAwait(false);

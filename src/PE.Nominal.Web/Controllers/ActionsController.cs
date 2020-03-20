@@ -240,6 +240,7 @@ namespace PE.Nominal.Web.Controllers
 
         #endregion Methods for MissingMap (Missing Mappings)
 
+        #region Methods for Export Account Mappings
         [HttpGet]
         [Route("NLMap")]
         public async Task<IActionResult> NLMap()
@@ -271,6 +272,41 @@ namespace PE.Nominal.Web.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        #endregion
+
+        #region Methods for Import Account Mappings
+        [HttpGet]
+        [Route("NLImportMap")]
+        public async Task<IActionResult> NLImportMap()
+        {
+            try
+            {
+                var data = await _actionService.NLImportMappingsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateImportMapping")]
+        public async Task<IActionResult> UpdateImportMapping([FromBody]ImportMapUpdate mapping)
+        {
+            try
+            {
+                await _actionService.SaveImportMappingCmd(mapping.DisbMapIndex, mapping.DisbCode);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
 
         #region Methods for Journal (Journal Posting)
 
@@ -588,6 +624,43 @@ namespace PE.Nominal.Web.Controllers
         }
 
         #endregion Methods for Journal (Journal Posting)
+
+        #region Methods for Integration Details
+
+        [HttpGet]
+        [Route("DetailGroups/{PeriodIndex}")]
+        public async Task<IActionResult> DetailGroups(int PeriodIndex)
+        {
+            try
+            {
+                var data = await _actionService.DetailGroupsQuery(PeriodIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("DetailList")]
+        public async Task<IActionResult> DetailList([FromBody]DetailGroup group)
+        {
+            try
+            {
+                var data = await _actionService.DetailListQuery(group.NLOrg, group.NLSource, group.NLSection, group.NLAccount, group.NLOffice, group.NLService, group.NLPartner, group.NLDept, group.NLPeriodIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        #endregion
 
         #region Methods for BankRec (Bank Reconciliation)
 
@@ -1082,6 +1155,25 @@ namespace PE.Nominal.Web.Controllers
             {
                 var data = await _actionService.ExpenseAccountsQuery();
                 return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        #endregion
+
+        #region Methods for Update Costing
+        [HttpPost]
+        [Route("CostingUpdate")]
+        public async Task<IActionResult> CostingUpdate()
+        {
+            try
+            {
+                await _actionService.CostingUpdateCmd();
+                return Ok();
             }
             catch (Exception ex)
             {

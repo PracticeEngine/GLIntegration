@@ -91,6 +91,11 @@ namespace PE.Nominal
             await nominalDAL.PostCreateCmd(PeriodIndex).ConfigureAwait(false);
         }
 
+        public async Task CostingUpdateCmd()
+        {
+            await nominalDAL.CostingUpdateCmd().ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<MissingMap>> MissingMappingsQuery()
         {
             return await nominalDAL.MissingMappingsQuery().ConfigureAwait(false);
@@ -110,6 +115,27 @@ namespace PE.Nominal
         {
             return await nominalDAL.NLMappingsQuery().ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()
+        {
+            return await nominalDAL.NLImportMappingsQuery().ConfigureAwait(false);
+        }
+
+        public async Task SaveImportMappingCmd(int MapIndex, string AccountCode)
+        {
+            await nominalDAL.SaveImportMappingCmd(MapIndex, AccountCode).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailGroup>> DetailGroupsQuery(int PeriodIndex)
+        {
+            return await nominalDAL.DetailGroupsQuery(PeriodIndex).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailLine>> DetailListQuery(int NLOrg, string NLSource, string NLSection, string NLAccount, string NLOffice, string NLService, int? NLPartner, string NLDept, int PeriodIndex)
+        {
+            return await nominalDAL.DetailListQuery(NLOrg, NLSource, NLSection, NLAccount, NLOffice, NLService, NLPartner, NLDept, PeriodIndex).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<JournalGroup>> JournalGroupsQuery() 
         {
             return await nominalDAL.JournalGroupsQuery().ConfigureAwait(false);
