@@ -574,9 +574,9 @@ var PE;
                                     data: data.map(function (item) {
                                         return [
                                             item.OrgName,
-                                            item.NomSource,
-                                            item.NomSection,
-                                            item.NomAccount,
+                                            item.MapSource,
+                                            item.MapSection,
+                                            item.MapAccount,
                                             item.OfficeName,
                                             item.ServiceName,
                                             item.PartnerName,

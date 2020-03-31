@@ -496,7 +496,7 @@
 
         async init(refresh: boolean = false): Promise<void> {
             this.showMessage("Loading Export Mapping Details...");
-            let data = await this.ajaxGet<PE.Nominal.IMissingMap[]>("api/Actions/NLMap");
+            let data = await this.ajaxGet<PE.Nominal.IGLMapping[]>("api/Actions/NLMap");
             if (refresh) {
                 // Wipe out existing
                 $("#gltable").DataTable().destroy();
@@ -510,9 +510,9 @@
                 data: data.map(function (item) {
                     return [
                         item.OrgName,
-                        item.NomSource,
-                        item.NomSection,
-                        item.NomAccount,
+                        item.MapSource,
+                        item.MapSection,
+                        item.MapAccount,
                         item.OfficeName,
                         item.ServiceName,
                         item.PartnerName,

@@ -90,7 +90,12 @@ declare namespace PE.Nominal {
 		MapSection: string | null;
 		MapServ: string | null;
 		MapSource: string | null;
-		StaffName: string | null;
+        StaffName: string | null;
+        OrgName: string | null;
+        ServiceName: string | null;
+        OfficeName: string | null;
+        PartnerName: string | null;
+        DepartmentName: string | null;
 	}
 	interface IGLNumEntries {
 		NumEntries: number;
