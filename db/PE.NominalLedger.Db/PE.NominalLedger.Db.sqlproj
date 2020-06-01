@@ -212,6 +212,7 @@
     <Build Include="Tables\tblTranNominalDeptMap.sql" />
     <Build Include="Tables\tblTranNominalSubDeptMap.sql" />
     <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Accounts.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Cashbook_Failed.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">
