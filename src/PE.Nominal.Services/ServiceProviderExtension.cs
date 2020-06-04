@@ -37,7 +37,7 @@ namespace PE.Nominal
         public static void AddPELoginSupport(this IServiceCollection services, IConfiguration config)
         {
             // Add Password Hashing If LocalLogin is Enabled
-            if (config.GetValue<bool>("PEAuth:EnableLocalLogin"))
+            if (config.GetValue<bool>("PEAuth:EnableGLLocalLogin"))
             {
                 services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                     .AddCookie(options =>
