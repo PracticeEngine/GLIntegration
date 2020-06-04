@@ -95,7 +95,7 @@ namespace PE.Nominal.Web
 
 
             // Add Reporting
-            //RegisterRepGen(services);
+            RegisterRepGen(services);
         }
 
         /// <summary>

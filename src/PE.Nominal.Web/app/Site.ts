@@ -263,6 +263,8 @@
         bankrec: boolean;
         mtd: boolean;
         expense: boolean;
+        disbimp: boolean;
+        costing: boolean;
         constructor() {
             console.info("Home");
             super();
@@ -273,6 +275,8 @@
             this.bankrec = this.hasAccess("BankRec");
             this.mtd = this.hasAccess("MTD");
             this.expense = this.hasAccess("ExpensePost");
+            this.disbimp = this.hasAccess("NLImport");
+            this.costing = this.hasAccess("CostingUpdate");
         }
     }
 
