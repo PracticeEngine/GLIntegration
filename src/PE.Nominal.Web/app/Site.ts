@@ -1597,8 +1597,11 @@
             this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
         }
 
-        run(): void {
-            console.log("do create disb batch");
+        async run(): Promise<void> {
+            this.showMessage("Importing Disbursements...");
+            await this.ajaxSendOnly("api/Actions/DisbImport", {});
+            this.clearMessage();
+            alert("Disbursement Import has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.goHome();
         }
     }
@@ -1859,7 +1862,7 @@
             if (allGroups.length > 0) {
                 this.hasMissingStaff(allGroups[0].BlankStaff > 0);
                 this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
-                this.noMissingData(!this.hasMissingStaff() && !this.hasMissingAccounts());
+                this.noMissingData(!this.hasMissingAccounts());
             }
             this.clearMessage();
             this.isReady(true);

@@ -139,5 +139,10 @@ namespace PE.Nominal.Fake
         {
             throw new NotImplementedException();
         }
+
+        public Task ImportDisbursementsCmd(int Org, PerformContext performContext, int StaffId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

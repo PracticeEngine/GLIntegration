@@ -1183,5 +1183,62 @@ namespace PE.Nominal.Web.Controllers
         }
 
         #endregion
+
+
+        #region Methods for Disbursement Import
+        [HttpPost]
+        [Route("DisbImport")]
+        public IActionResult DisbImport()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunDisbImport(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        public async Task RunDisbImport(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    try
+                    {
+                        context.WriteLine($"Preparing to Import Disbursements for organisation {org.PracName}.");
+                        await _glProvider.ImportDisbursementsCmd(org.PracID, context, 0);
+                        context.WriteLine($"Finished Importing Disbursements for organisation {org.PracName}.");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"Import Disbursements - Errors during transfer of organisation {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organisation {org.PracName} failed to import due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organisation {org.PracName} failed to import due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+        #endregion
     }
 }

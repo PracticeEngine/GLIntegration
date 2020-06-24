@@ -100,5 +100,14 @@ namespace PE.Nominal
         {
             throw new NotImplementedException();
         }
+
+        public async Task ImportDisbursementsCmd(int Org, PerformContext performContext, int StaffId)
+        {
+            var result = new SqlParameter("@Result", System.Data.SqlDbType.Int)
+            {
+                Direction = System.Data.ParameterDirection.Output
+            };
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Disbs {0}, {1}, @Result", Org, StaffId, result).ConfigureAwait(false);
+        }
     }
 }

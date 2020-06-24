@@ -1816,8 +1816,21 @@ var PE;
                 return _this;
             }
             NLImport.prototype.run = function () {
-                console.log("do create disb batch");
-                this.goHome();
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Importing Disbursements...");
+                                return [4, this.ajaxSendOnly("api/Actions/DisbImport", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Disbursement Import has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+                                this.goHome();
+                                return [2];
+                        }
+                    });
+                });
             };
             return NLImport;
         }(BaseVM));
@@ -2140,7 +2153,7 @@ var PE;
                                 if (allGroups.length > 0) {
                                     this.hasMissingStaff(allGroups[0].BlankStaff > 0);
                                     this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
-                                    this.noMissingData(!this.hasMissingStaff() && !this.hasMissingAccounts());
+                                    this.noMissingData(!this.hasMissingAccounts());
                                 }
                                 this.clearMessage();
                                 this.isReady(true);

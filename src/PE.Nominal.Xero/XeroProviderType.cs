@@ -828,5 +828,10 @@ namespace PE.Nominal.XeroGL
         {
             throw new NotImplementedException();
         }
+
+        public Task ImportDisbursementsCmd(int Org, PerformContext performContext, int StaffId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
