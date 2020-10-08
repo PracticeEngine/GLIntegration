@@ -1,6 +1,15 @@
 ﻿@model PE.Nominal.ViewModels.SPAViewModel
 <!-- ko component:bodyVM -->
 <!-- /ko -->
+@{ if (Model.ProviderType == "Xero")
+    {
+        @inject Microsoft.Extensions.Options.IOptions<PE.Nominal.XeroGL.XeroConfig> XeroOptions
+        if (String.IsNullOrEmpty(XeroOptions.Value.OAuthAccessToken))
+        {
+            <span data-xero-sso data-label="Sign in with Xero"></span>
+        }
+    }
+}
 
 <template id="body-Home">
     <div class="row">
@@ -23,6 +32,7 @@
         </div>
     </div>
 </template>
+
 <template id="body-IntegrationExtract">
     <div class="row">
         <div class="col-md-offset-3 col-md-6">
@@ -677,7 +687,7 @@
             <div class="panel panel-primary panel-headroom">
                 <div class="panel-heading">
                     Making Tax Digital
-                </div>               
+                </div>
                 <div class="panel-body" data-bind="if:isReady">
                     <strong>Current Period</strong>
                     <div class="row">
@@ -691,8 +701,16 @@
                     <p>The sync process will create new Debtor accounts and send the latest VAT Invoice data.</p>
                 </div>
                 <div class="panel-footer text-right">
-                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
-                    <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                    @{ if (Model.ProviderType == "Xero")
+                        {
+                            @inject Microsoft.Extensions.Options.IOptions<PE.Nominal.XeroGL.XeroConfig> XeroOptions
+                            if (!String.IsNullOrEmpty(XeroOptions.Value.OAuthAccessToken))
+                            {
+                                <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                                <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                            }
+                        }
+                    }
                 </div>
             </div>
         </div>

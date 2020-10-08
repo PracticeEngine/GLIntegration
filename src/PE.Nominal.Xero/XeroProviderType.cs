@@ -9,11 +9,11 @@ using PE.Nominal.Provider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Xero.Api.Core;
-using Xero.Api.Infrastructure.Authenticators;
-using Xero.Api.Infrastructure.OAuth;
+using Xero.NetStandard.OAuth2.Api;
+using Xero.NetStandard.OAuth2.Model.Accounting;
 
 namespace PE.Nominal.XeroGL
 {
@@ -193,7 +193,7 @@ namespace PE.Nominal.XeroGL
         /// <param name="HistoryComment"></param>
         /// <param name="AsDraft"></param>
         /// <returns></returns>
-        private async Task SendJournalCmd(IXeroCoreApi client, int Org, IEnumerable<JournalExtract> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
+        private async Task SendJournalCmd(int Org, IEnumerable<JournalExtract> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
         {
             throw new NotImplementedException();
             /*
@@ -305,7 +305,7 @@ namespace PE.Nominal.XeroGL
         /// <param name="HistoryComment"></param>
         /// <param name="AsDraft"></param>
         /// <returns></returns>
-        private async Task SendStatHoursJournalCmd(IXeroCoreApi client, int Org, IEnumerable<IntacctStatHours> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
+        private async Task SendStatHoursJournalCmd(int Org, IEnumerable<IntacctStatHours> lines, DateTime PostingDate, string ReferenceNumber, string JournalSymbol, string Description, string HistoryComment, bool AsDraft)
         {
             throw new NotImplementedException();
             /*
@@ -419,21 +419,6 @@ namespace PE.Nominal.XeroGL
             return orgConfig;
         }
 
-        /// <summary>
-        /// Returns an Xero Client Connected to the correct database for Cashbook Posting
-        /// </summary>
-        /// <param name="org"></param>
-        /// <returns></returns>
-        private IXeroCoreApi GetCashClient(int org)
-        {
-            var orgConfig = GetOrgCashConfig(org);
-
-            var xeroClient = new XeroCoreApi(orgConfig.XeroURL, new PrivateAuthenticator(orgConfig.XeroCertPath),
-                new Consumer(orgConfig.SenderID, orgConfig.SenderPassword));
-
-            return xeroClient;
-        }
-
 
         public async Task CashJournalCmd(int Org, IEnumerable<JournalExtract> lines, string JournalSymbol, PerformContext performContext)
         {
@@ -450,22 +435,39 @@ namespace PE.Nominal.XeroGL
 
         public async Task<IEnumerable<int>> PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, PerformContext performContext)
         {
+            DateTime startTime = DateTime.Now;
+            int apiCalls = 0;
+
             List<int> processedInvoices = new List<int>();
 
             var orgConfig = GetOrgConfig(Org);
 
-            var xeroClient = GetClient(Org);
+            if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
+            {
+                await RefreshAccessToken();
+            }
 
-            var xeroContacts = new List<Xero.Api.Core.Model.Contact>();
+            var AccountingApi = new AccountingApi();
+
+            var xeroContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
+            xeroContacts._Contacts = new List<Contact>();
             bool moreContacts = true;
             int currentContactPage = 1;
 
             while (moreContacts)
             {
-                var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
-                if (pagedContacts != null && pagedContacts.Count() > 0)
+                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
                 {
-                    xeroContacts.AddRange(pagedContacts);
+                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    startTime = DateTime.Now;
+                    apiCalls = 0;
+                }
+                var pagedContacts = await AccountingApi.GetContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, page: currentContactPage++);
+                apiCalls++;
+                //var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
+                if (pagedContacts != null && pagedContacts._Contacts.Count() > 0)
+                {
+                    xeroContacts._Contacts.AddRange(pagedContacts._Contacts);
                 }
                 else
                 {
@@ -473,10 +475,12 @@ namespace PE.Nominal.XeroGL
                 }
             }
 
-            performContext.WriteLine(ConsoleTextColor.White, $"Received list of {xeroContacts.Count()} Xero Contacts.");
+            performContext.WriteLine(ConsoleTextColor.White, $"Received list of {xeroContacts._Contacts.Count()} Xero Contacts.");
 
-            var newContacts = new List<Xero.Api.Core.Model.Contact>();
-            var updatedContacts = new List<Xero.Api.Core.Model.Contact>();
+            var newContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts(); 
+            newContacts._Contacts = new List<Contact>();
+            var updatedContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
+            updatedContacts._Contacts = new List<Contact>();
 
             int newCount = 0;
             int updateCount = 0;
@@ -487,49 +491,49 @@ namespace PE.Nominal.XeroGL
 
             foreach (var client in clients)
             {
-                var cont = xeroContacts.Where(c => c.ContactNumber == client.ContIndex.ToString());
+                var cont = xeroContacts._Contacts.Where(c => c.ContactNumber == client.ContIndex.ToString());
                 if (cont.Count() == 0)
                 {
                     // New Contact in Xero
-                    Xero.Api.Core.Model.Contact newcontact = new Xero.Api.Core.Model.Contact();
+                    Contact newcontact = new Contact();
                     newcontact.AccountNumber = client.ClientCode;
                     newcontact.ContactNumber = client.ContIndex.ToString();
                     newcontact.Name = client.ClientName + " (PE Client: " + client.ClientCode + ")";
                     newcontact.IsCustomer = true;
-                    var address = new Xero.Api.Core.Model.Address();
-                    address.AddressType = Xero.Api.Core.Model.Types.AddressType.PostOfficeBox;
+                    var address = new Address();
+                    address.AddressType = Address.AddressTypeEnum.POBOX;
                     address.AddressLine1 = client.Address;
                     address.City = client.TownCity;
                     address.Region = client.County;
                     address.Country = client.Country;
                     address.PostalCode = client.PostCode;
-                    newcontact.Addresses = new List<Xero.Api.Core.Model.Address>();
+                    newcontact.Addresses = new List<Address>();
                     newcontact.Addresses.Add(address);
-                    newcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
+                    newcontact.ContactStatus = Contact.ContactStatusEnum.ACTIVE;
 
-                    newContacts.Add(newcontact);
+                    newContacts._Contacts.Add(newcontact);
                     newCount++;
                 }
                 else
                 {
                     // Update Contact in Xero
-                    Xero.Api.Core.Model.Contact existingcontact = cont.First();
+                    Contact existingcontact = cont.First();
                     existingcontact.AccountNumber = client.ClientCode;
                     existingcontact.ContactNumber = client.ContIndex.ToString();
                     existingcontact.Name = client.ClientName + " (PE Client: " + client.ClientCode + ")";
                     existingcontact.IsCustomer = true;
-                    var address = new Xero.Api.Core.Model.Address();
-                    address.AddressType = Xero.Api.Core.Model.Types.AddressType.PostOfficeBox;
+                    var address = new Address();
+                    address.AddressType = Address.AddressTypeEnum.POBOX;
                     address.AddressLine1 = client.Address;
                     address.City = client.TownCity;
                     address.Region = client.County;
                     address.Country = client.Country;
                     address.PostalCode = client.PostCode;
-                    existingcontact.Addresses = new List<Xero.Api.Core.Model.Address>();
+                    existingcontact.Addresses = new List<Address>();
                     existingcontact.Addresses.Add(address);
-                    existingcontact.ContactStatus = Xero.Api.Core.Model.Status.ContactStatus.Active;
+                    existingcontact.ContactStatus = Contact.ContactStatusEnum.ACTIVE;
 
-                    updatedContacts.Add(existingcontact);
+                    updatedContacts._Contacts.Add(existingcontact);
                     updateCount++;
                 }
 
@@ -538,19 +542,32 @@ namespace PE.Nominal.XeroGL
                     totalSent = totalSent + 50;
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 new Clients to Xero. Sent {totalSent} of {totalClients}");
 
-                    var createResponse = await xeroClient.Contacts.SummarizeErrors(false).CreateAsync(newContacts);
-
-                    foreach (var newresponse in createResponse)
+                    if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                     {
-                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        await RefreshAccessToken();
+                    }
+                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                    {
+                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+
+                    var createResponse = await AccountingApi.CreateContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, newContacts, false);
+                    apiCalls++;
+
+                    foreach (var newresponse in createResponse._Contacts)
+                    {
+                        if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                         {
                             ErrorsAddingClients = true;
-                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.Errors.First().Message}");
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message}");
                         }
                     }
 
                     newCount = 0;
-                    newContacts = new List<Xero.Api.Core.Model.Contact>();
+                    newContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
+                    newContacts._Contacts = new List<Contact>();
                     ClientsAdded = true;
                 }
 
@@ -559,18 +576,31 @@ namespace PE.Nominal.XeroGL
                     totalSent = totalSent + 50;
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 existing Clients to update in Xero. Sent {totalSent} of {totalClients}");
 
-                    var updateResponse = await xeroClient.Contacts.SummarizeErrors(false).UpdateAsync(updatedContacts);
-
-                    foreach (var newresponse in updateResponse)
+                    if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                     {
-                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        await RefreshAccessToken();
+                    }
+                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                    {
+                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+
+                    var updateResponse = await AccountingApi.UpdateOrCreateContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, updatedContacts, false);
+                    apiCalls++;
+
+                    foreach (var newresponse in updateResponse._Contacts)
+                    {
+                        if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                         {
                             ErrorsAddingClients = true;
-                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.Errors.First().Message}");
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.ValidationErrors.First().Message}");
                         }
                     }
                     updateCount = 0;
-                    updatedContacts = new List<Xero.Api.Core.Model.Contact>();
+                    updatedContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
+                    updatedContacts._Contacts = new List<Contact>();
                 }
             }
 
@@ -584,15 +614,27 @@ namespace PE.Nominal.XeroGL
                 {
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending last {newCount} new Clients to Xero.");
                 }
-                
-                var createResponse = await xeroClient.Contacts.SummarizeErrors(false).CreateAsync(newContacts);
 
-                foreach(var newresponse in createResponse)
+                if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                 {
-                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    await RefreshAccessToken();
+                }
+                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                {
+                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    startTime = DateTime.Now;
+                    apiCalls = 0;
+                }
+
+                var createResponse = await AccountingApi.CreateContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, newContacts, false);
+                apiCalls++;
+
+                foreach (var newresponse in createResponse._Contacts)
+                {
+                    if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                     {
                         ErrorsAddingClients = true;
-                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.Errors.First().Message}");
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message}");
                     }
                 }
                 ClientsAdded = true;
@@ -614,30 +656,55 @@ namespace PE.Nominal.XeroGL
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending last {updateCount} Client updates to Xero.");
                 }
 
-                var updateResponse = await xeroClient.Contacts.SummarizeErrors(false).UpdateAsync(updatedContacts);
-
-                foreach (var newresponse in updateResponse)
+                if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                 {
-                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    await RefreshAccessToken();
+                }
+                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                {
+                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    startTime = DateTime.Now;
+                    apiCalls = 0;
+                }
+
+                var updateResponse = await AccountingApi.UpdateOrCreateContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, updatedContacts, false);
+                apiCalls++;
+
+                foreach (var newresponse in updateResponse._Contacts)
+                {
+                    if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                     {
                         ErrorsAddingClients = true;
-                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.Errors.First().Message}");
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Client {newresponse.Name} was not updated in Xero. The error was {newresponse.ValidationErrors.First().Message}");
                     }
                 }
             }
 
             if (ClientsAdded)
             {
-                xeroContacts = new List<Xero.Api.Core.Model.Contact>();
+                xeroContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
+                xeroContacts._Contacts = new List<Contact>();
                 moreContacts = true;
                 currentContactPage = 1;
 
                 while (moreContacts)
                 {
-                    var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
-                    if (pagedContacts != null && pagedContacts.Count() > 0)
+                    if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                     {
-                        xeroContacts.AddRange(pagedContacts);
+                        await RefreshAccessToken();
+                    }
+                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                    {
+                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+
+                    var pagedContacts = await AccountingApi.GetContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, page: currentContactPage++);
+                    apiCalls++;
+                    if (pagedContacts != null && pagedContacts._Contacts.Count() > 0)
+                    {
+                        xeroContacts._Contacts.AddRange(pagedContacts._Contacts);
                     }
                     else
                     {
@@ -645,11 +712,13 @@ namespace PE.Nominal.XeroGL
                     }
                 }
 
-                performContext.WriteLine(ConsoleTextColor.White, $"New Clients added. Received new list of {xeroContacts.Count()} Xero Contacts.");
+                performContext.WriteLine(ConsoleTextColor.White, $"New Clients added. Received new list of {xeroContacts._Contacts.Count()} Xero Contacts.");
             }
 
-            var xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
-            var xeroCreditNotes = new List<Xero.Api.Core.Model.CreditNote>();
+            var xeroInvoices = new Xero.NetStandard.OAuth2.Model.Accounting.Invoices();
+            xeroInvoices._Invoices = new List<Invoice>();
+            var xeroCreditNotes = new Xero.NetStandard.OAuth2.Model.Accounting.CreditNotes();
+            xeroCreditNotes._CreditNotes = new List<CreditNote>();
             int invCount = 0;
             int cnCount = 0;
             totalSent = 0;
@@ -660,34 +729,34 @@ namespace PE.Nominal.XeroGL
                 switch (inv.DebtTranType) {
                     case 3:
                     case 4:
-                        var xeroInv = new Xero.Api.Core.Model.Invoice();
+                        var xeroInv = new Invoice();
 
-                        xeroInv.Type = Xero.Api.Core.Model.Types.InvoiceType.AccountsReceivable;
-                        xeroInv.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? Xero.Api.Core.Model.Status.InvoiceStatus.Draft : Xero.Api.Core.Model.Status.InvoiceStatus.Authorised);
+                        xeroInv.Type = Invoice.TypeEnum.ACCREC;
+                        xeroInv.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? Invoice.StatusEnum.DRAFT : Invoice.StatusEnum.AUTHORISED);
                         xeroInv.Reference = inv.DebtTranRefAlpha;
-                        xeroInv.Number = inv.DebtTranIndex.ToString();
+                        xeroInv.InvoiceNumber = inv.DebtTranIndex.ToString();
 
-                        var contact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
+                        var contact = xeroContacts._Contacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
                         xeroInv.Contact = contact;
                         xeroInv.Date = inv.DebtTranDate;
                         xeroInv.DueDate = inv.DueDate;
-                        xeroInv.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
-                        xeroInv.LineItems = new List<Xero.Api.Core.Model.LineItem>();
+                        xeroInv.LineAmountTypes = LineAmountTypes.Exclusive;
+                        xeroInv.LineItems = new List<LineItem>();
 
                         foreach (var line in inv.Lines)
                         {
-                            var xeroLine = new Xero.Api.Core.Model.LineItem();
+                            var xeroLine = new LineItem();
 
                             xeroLine.Description = line.Description;
                             xeroLine.LineAmount = line.Amount;
                             xeroLine.TaxAmount = line.VATAmount;
                             xeroLine.TaxType = line.TaxCode;
                             xeroLine.AccountCode = line.AccountCode;
-                            xeroLine.Tracking = new Xero.Api.Core.Model.ItemTracking();
+                            xeroLine.Tracking = new List<LineItemTracking>();
 
                             if (!String.IsNullOrEmpty(line.TrackingName1))
                             {
-                                Xero.Api.Core.Model.ItemTrackingCategory c1 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                LineItemTracking c1 = new LineItemTracking
                                 {
                                     Name = line.TrackingName1,
                                     Option = line.TrackingOption1
@@ -697,7 +766,7 @@ namespace PE.Nominal.XeroGL
 
                             if (!String.IsNullOrEmpty(line.TrackingName2))
                             {
-                                Xero.Api.Core.Model.ItemTrackingCategory c2 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                LineItemTracking c2 = new LineItemTracking
                                 {
                                     Name = line.TrackingName2,
                                     Option = line.TrackingOption2
@@ -709,40 +778,39 @@ namespace PE.Nominal.XeroGL
 
                         }
 
-                        xeroInvoices.Add(xeroInv);
+                        xeroInvoices._Invoices.Add(xeroInv);
 
                         invCount++;
                         break;
                     case 6:
                     case 14:
-                        var xeroCn = new Xero.Api.Core.Model.CreditNote();
+                        var xeroCn = new CreditNote();
 
-                        xeroCn.Type = Xero.Api.Core.Model.Types.CreditNoteType.AccountsReceivable;
-                        xeroCn.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? Xero.Api.Core.Model.Status.InvoiceStatus.Draft : Xero.Api.Core.Model.Status.InvoiceStatus.Authorised);
+                        xeroCn.Type = CreditNote.TypeEnum.ACCRECCREDIT;
+                        xeroCn.Status = (_config.PostAsDraft.HasValue && _config.PostAsDraft.Value ? CreditNote.StatusEnum.DRAFT : CreditNote.StatusEnum.AUTHORISED);
                         xeroCn.Reference = inv.DebtTranRefAlpha;
-                        xeroCn.Number = inv.DebtTranIndex.ToString();
+                        xeroCn.CreditNoteNumber = inv.DebtTranIndex.ToString();
 
-                        var cncontact = xeroContacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
+                        var cncontact = xeroContacts._Contacts.Where(c => c.ContactNumber == inv.ContIndex.ToString()).FirstOrDefault();
                         xeroCn.Contact = cncontact;
                         xeroCn.Date = inv.DebtTranDate;
-                        xeroCn.DueDate = inv.DueDate;
-                        xeroCn.LineAmountTypes = Xero.Api.Core.Model.Types.LineAmountType.Exclusive;
-                        xeroCn.LineItems = new List<Xero.Api.Core.Model.LineItem>();
+                        xeroCn.LineAmountTypes = LineAmountTypes.Exclusive;
+                        xeroCn.LineItems = new List<LineItem>();
 
                         foreach (var line in inv.Lines)
                         {
-                            var xeroLine = new Xero.Api.Core.Model.LineItem();
+                            var xeroLine = new LineItem();
 
                             xeroLine.Description = line.Description;
                             xeroLine.LineAmount = line.Amount * -1;
                             xeroLine.TaxAmount = line.VATAmount * -1;
                             xeroLine.TaxType = line.TaxCode;
                             xeroLine.AccountCode = line.AccountCode;
-                            xeroLine.Tracking = new Xero.Api.Core.Model.ItemTracking();
+                            xeroLine.Tracking = new List<LineItemTracking>();
 
                             if (!String.IsNullOrEmpty(line.TrackingName1))
                             {
-                                Xero.Api.Core.Model.ItemTrackingCategory c1 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                LineItemTracking c1 = new LineItemTracking
                                 {
                                     Name = line.TrackingName1,
                                     Option = line.TrackingOption1
@@ -752,7 +820,7 @@ namespace PE.Nominal.XeroGL
 
                             if (!String.IsNullOrEmpty(line.TrackingName2))
                             {
-                                Xero.Api.Core.Model.ItemTrackingCategory c2 = new Xero.Api.Core.Model.ItemTrackingCategory
+                                LineItemTracking c2 = new LineItemTracking
                                 {
                                     Name = line.TrackingName2,
                                     Option = line.TrackingOption2
@@ -763,7 +831,7 @@ namespace PE.Nominal.XeroGL
                             xeroCn.LineItems.Add(xeroLine);
                         }
 
-                        xeroCreditNotes.Add(xeroCn);
+                        xeroCreditNotes._CreditNotes.Add(xeroCn);
 
                         cnCount++;
                         break;
@@ -774,21 +842,34 @@ namespace PE.Nominal.XeroGL
                     totalSent = totalSent + 50;
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 invoices to Xero. Sent {totalSent} of {totalInvoices}");
 
-                    var invoiceResponse = await xeroClient.Invoices.SummarizeErrors(false).CreateAsync(xeroInvoices);
-
-                    foreach (var newresponse in invoiceResponse)
+                    if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                     {
-                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        await RefreshAccessToken();
+                    }
+                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                    {
+                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+
+                    var invoiceResponse = await AccountingApi.CreateInvoicesAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, xeroInvoices, false);
+                    apiCalls++;
+
+                    foreach (var newresponse in invoiceResponse._Invoices)
+                    {
+                        if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                         {
-                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message} DebtTranIndex is {newresponse.InvoiceNumber}");
                         }
                         else
                         {
-                            processedInvoices.Add(Int32.Parse(newresponse.Number));
+                            processedInvoices.Add(Int32.Parse(newresponse.InvoiceNumber));
                         }
                     }
                     invCount = 0;
-                    xeroInvoices = new List<Xero.Api.Core.Model.Invoice>();
+                    xeroInvoices = new Invoices();
+                    xeroInvoices._Invoices = new List<Invoice>();
                 }
 
                 if (cnCount > 49)
@@ -796,21 +877,34 @@ namespace PE.Nominal.XeroGL
                     totalSent = totalSent + 50;
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending batch of 50 credit notes to Xero. Sent {totalSent} of {totalInvoices}");
 
-                    var cnResponse = await xeroClient.CreditNotes.SummarizeErrors(false).CreateAsync(xeroCreditNotes);
-
-                    foreach (var newresponse in cnResponse)
+                    if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                     {
-                        if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                        await RefreshAccessToken();
+                    }
+                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                    {
+                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+
+                    var cnResponse = await AccountingApi.CreateCreditNotesAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, xeroCreditNotes, false);
+                    apiCalls++;
+
+                    foreach (var newresponse in cnResponse._CreditNotes)
+                    {
+                        if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                         {
-                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                            performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message} DebtTranIndex is {newresponse.CreditNoteNumber}");
                         }
                         else
                         {
-                            processedInvoices.Add(Int32.Parse(newresponse.Number));
+                            processedInvoices.Add(Int32.Parse(newresponse.CreditNoteNumber));
                         }
                     }
                     cnCount = 0;
-                    xeroCreditNotes = new List<Xero.Api.Core.Model.CreditNote>();
+                    xeroCreditNotes = new CreditNotes();
+                    xeroCreditNotes._CreditNotes = new List<CreditNote>();
                 }
             }
             if (invCount > 0)
@@ -824,17 +918,29 @@ namespace PE.Nominal.XeroGL
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending last {invCount} invoices to Xero.");
                 }
 
-                var invoiceResponse = await xeroClient.Invoices.SummarizeErrors(false).CreateAsync(xeroInvoices);
-
-                foreach (var newresponse in invoiceResponse)
+                if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                 {
-                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    await RefreshAccessToken();
+                }
+                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                {
+                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    startTime = DateTime.Now;
+                    apiCalls = 0;
+                }
+
+                var invoiceResponse = await AccountingApi.CreateInvoicesAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, xeroInvoices, false);
+                apiCalls++;
+
+                foreach (var newresponse in invoiceResponse._Invoices)
+                {
+                    if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                     {
-                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Invoice #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message} DebtTranIndex is {newresponse.InvoiceNumber}");
                     }
                     else
                     {
-                        processedInvoices.Add(Int32.Parse(newresponse.Number));
+                        processedInvoices.Add(Int32.Parse(newresponse.InvoiceNumber));
                     }
                 }
             }
@@ -849,17 +955,29 @@ namespace PE.Nominal.XeroGL
                     performContext.WriteLine(ConsoleTextColor.White, $"Sending last {cnCount} credit notes to Xero.");
                 }
 
-                var cnResponse = await xeroClient.CreditNotes.SummarizeErrors(false).CreateAsync(xeroCreditNotes);
-
-                foreach (var newresponse in cnResponse)
+                if (_config.OAuthExpiry < DateTime.Now.AddMinutes(5))
                 {
-                    if (newresponse.Errors != null && newresponse.Errors.Count > 0)
+                    await RefreshAccessToken();
+                }
+                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                {
+                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    startTime = DateTime.Now;
+                    apiCalls = 0;
+                }
+
+                var cnResponse = await AccountingApi.CreateCreditNotesAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, xeroCreditNotes, false);
+                apiCalls++;
+
+                foreach (var newresponse in cnResponse._CreditNotes)
+                {
+                    if (newresponse.ValidationErrors != null && newresponse.ValidationErrors.Count > 0)
                     {
-                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.Errors.First().Message} DebtTranIndex is {newresponse.Number}");
+                        performContext.WriteLine(ConsoleTextColor.Yellow, $"Credit Note #{newresponse.Reference} for Client {newresponse.Contact.Name} was not added to Xero. The error was {newresponse.ValidationErrors.First().Message} DebtTranIndex is {newresponse.CreditNoteNumber}");
                     }
                     else
                     {
-                        processedInvoices.Add(Int32.Parse(newresponse.Number));
+                        processedInvoices.Add(Int32.Parse(newresponse.CreditNoteNumber));
                     }
                 }
             }

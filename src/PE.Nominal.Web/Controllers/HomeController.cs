@@ -46,5 +46,14 @@ namespace PE.Nominal.Web.Controllers
         {
             return View();
         }
+
+        public async Task<IActionResult> TenantError()
+        {
+            var vm = await _pageService.GetViewModel(User.Identity.Name);
+            vm.ProviderType = _viewOptions.ProviderType;
+            vm.SQLIntegration = _viewOptions.ProviderType.Equals("sql", StringComparison.OrdinalIgnoreCase);
+            vm.IntacctHrsJournal = _viewOptions.ProviderType.Equals("intacct", StringComparison.OrdinalIgnoreCase) && _journalOptions.IntacctHourJournals == null ? false : _journalOptions.IntacctHourJournals.Count() > 0;
+            return View(vm);
+        }
     }
 }
