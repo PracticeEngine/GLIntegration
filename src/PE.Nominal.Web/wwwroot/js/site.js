@@ -4,7 +4,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -12,11 +12,10 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -460,6 +459,88 @@ var PE;
             return MissingMap;
         }(BaseVM));
         Nominal.MissingMap = MissingMap;
+        var ExportMapEditor = (function (_super) {
+            __extends(ExportMapEditor, _super);
+            function ExportMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.acctTypes = ko.observableArray([]);
+                _this.selectedType = ko.observable(item.AccountTypeCode);
+                _this.accounts = ko.observableArray([]);
+                _this.selectedAccount = ko.observable(item.AccountCode);
+                _this.toDispose.push(_this.selectedType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
+                    var acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!(this.item && this.item.MapOrg && acctType)) return [3, 2];
+                                this.showMessage("Loading Account List...");
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.MapOrg + "/" + acctType)];
+                            case 1:
+                                acctList = _a.sent();
+                                this.accounts(acctList);
+                                this.clearMessage();
+                                return [3, 3];
+                            case 2:
+                                this.accounts([]);
+                                _a.label = 3;
+                            case 3: return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ExportMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var types, acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading GL Information...");
+                                if (!this.item.MapOrg) return [3, 3];
+                                return [4, this.ajaxGet("api/Actions/AccountTypes/" + this.item.MapOrg)];
+                            case 1:
+                                types = _a.sent();
+                                this.acctTypes(types);
+                                if (!this.item.AccountTypeCode) return [3, 3];
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.MapOrg + "/" + this.item.AccountTypeCode)];
+                            case 2:
+                                acctList = _a.sent();
+                                this.accounts(acctList);
+                                _a.label = 3;
+                            case 3:
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExportMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = {
+                                    MapIndex: this.item.MapIndex,
+                                    AccountTypeCode: this.selectedType() || "",
+                                    AccountCode: this.selectedAccount() || ""
+                                };
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExportMapEditor;
+        }(BaseVM));
         var MapEditor = (function (_super) {
             __extends(MapEditor, _super);
             function MapEditor(item) {
@@ -587,11 +668,12 @@ var PE;
                                             item.ServiceName,
                                             item.PartnerName,
                                             item.DepartmentName,
+                                            item.AccountCode,
                                             item
                                         ];
                                     }),
                                     columns: [
-                                        { title: "Organization" },
+                                        { title: "Organisation" },
                                         { title: "Source" },
                                         { title: "Section" },
                                         { title: "Account" },
@@ -599,13 +681,14 @@ var PE;
                                         { title: "Service" },
                                         { title: "Partner" },
                                         { title: "Department" },
+                                        { title: "Account Code" },
                                         { name: "item", visible: false }
                                     ]
                                 });
                                 table.on("select.dt", function (e, dt, type, indexes) {
                                     var arrData = table.row(indexes).data();
                                     var item = arrData[arrData.length - 1];
-                                    _this.editor(new MapEditor(item));
+                                    _this.editor(new ExportMapEditor(item));
                                 });
                                 this.clearMessage();
                                 return [2];

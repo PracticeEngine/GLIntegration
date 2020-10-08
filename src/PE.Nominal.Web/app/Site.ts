@@ -425,6 +425,63 @@
     }
 
     /**
+     * Class for Editing an Export Account Mapping 
+     */
+    class ExportMapEditor extends BaseVM {
+        item: PE.Nominal.IGLMapping;
+        acctTypes: KnockoutObservableArray<PE.Nominal.IGLType>;
+        selectedType: KnockoutObservable<string>;
+        accounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
+        selectedAccount: KnockoutObservable<string>;
+        constructor(item: PE.Nominal.IGLMapping) {
+            super(false);
+            this.item = item;
+            this.acctTypes = ko.observableArray([]);
+            this.selectedType = ko.observable(item.AccountTypeCode);
+            this.accounts = ko.observableArray([]);
+            this.selectedAccount = ko.observable(item.AccountCode);
+            this.toDispose.push(this.selectedType.subscribe(async (acctType) => {
+                if (this.item && this.item.MapOrg && acctType) {
+                    this.showMessage("Loading Account List...");
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.MapOrg + "/" + acctType);
+                    this.accounts(acctList);
+                    this.clearMessage();
+                } else {
+                    this.accounts([]);
+                }
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            if (this.item.MapOrg) {
+                let types = await this.ajaxGet<PE.Nominal.IGLType[]>("api/Actions/AccountTypes/" + this.item.MapOrg);
+                this.acctTypes(types);
+                if (this.item.AccountTypeCode) {
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.MapOrg + "/" + this.item.AccountTypeCode);
+                    this.accounts(acctList);
+                }
+            }
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IMapUpdate = {
+                MapIndex: this.item.MapIndex,
+                AccountTypeCode: this.selectedType() || "",
+                AccountCode: this.selectedAccount() || ""
+            };
+            await this.ajaxSendOnly("api/Actions/UpdateMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+        }
+    }
+
+
+    /**
      * Class for Editing a Mapping (Missing or Journal)
      */
     class MapEditor extends BaseVM {
@@ -484,7 +541,7 @@
      * Export Account Mappings VM
      */
     export class NLMap extends BaseVM {
-        editor: KnockoutObservable<MapEditor>;
+        editor: KnockoutObservable<ExportMapEditor>;
         constructor() {
             console.info("NLMap");
             super();
@@ -521,11 +578,12 @@
                         item.ServiceName,
                         item.PartnerName,
                         item.DepartmentName,
+                        item.AccountCode,
                         item
                     ];
                 }),
                 columns: [
-                    { title: "Organization" },
+                    { title: "Organisation" },
                     { title: "Source" },
                     { title: "Section" },
                     { title: "Account" },
@@ -533,6 +591,7 @@
                     { title: "Service" },
                     { title: "Partner" },
                     { title: "Department" },
+                    {title: "Account Code" },
                     { name: "item", visible: false }
                 ]
             });
@@ -540,7 +599,7 @@
                 // On Row Select
                 let arrData = <Array<any>>table.row(indexes).data();
                 let item = arrData[arrData.length - 1];
-                this.editor(new MapEditor(item));
+                this.editor(new ExportMapEditor(item));
             });
             this.clearMessage();
         }
