@@ -124,6 +124,27 @@ namespace PE.Nominal.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("CurrencySymbol")]
+        public async Task<IActionResult> CurrencySymbol()
+        {
+            try
+            {
+                var data = _options.CurrencySymbol;
+
+                if (string.IsNullOrWhiteSpace(data))
+                    data = "$";
+
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+
+                return BadRequest(ex.Message);
+            }
+        }
+
         #endregion Methods for NominalControl (Integration Setup)
 
         #region Methods for IntegrationExtract (Integration Extract)

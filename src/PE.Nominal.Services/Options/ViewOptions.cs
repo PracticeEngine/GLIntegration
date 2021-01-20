@@ -11,5 +11,7 @@ namespace PE.Nominal.Options
     public class ViewOptions
     {
         public string ProviderType { get; set; }
+
+        public string CurrencySymbol { get; set; }
     }
 }

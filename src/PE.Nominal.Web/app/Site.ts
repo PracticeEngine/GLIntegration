@@ -557,6 +557,7 @@
         children: KnockoutObservableArray<GroupNode>;
         selectedItem: KnockoutObservable<GroupNode>;
         editor: KnockoutObservable<MapEditor>;
+        currencySymbol: KnockoutObservable<string>;
         table: DataTables.Api;
         constructor() {
             console.info("Journal");
@@ -564,6 +565,7 @@
             this.children = ko.observableArray([]);
             this.selectedItem = ko.observable(undefined);
             this.editor = ko.observable(undefined);
+            this.currencySymbol = ko.observable("");
             this.toDispose.push(this.selectedItem.subscribe((val) => {
                 if (val && val.filter) {
                     this.loadItem(val);
@@ -593,6 +595,7 @@
         }
 
         async loadItem(item: GroupNode): Promise<void> {
+            let currencySymbol = this.currencySymbol();
             this.showMessage("Loading Group...");
             let data = await this.ajaxSendReceive<PE.Nominal.IJournalMap[], Partial<PE.Nominal.IJournalGroup>>("api/Actions/JournalList", item.group);
             if (this.table) {
@@ -635,7 +638,7 @@
                         className: "text-right",
                         render: function (num) {
                             num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                            return "$ " + parseFloat(num).toFixed(2);
+                            return currencySymbol + " " + parseFloat(num).toFixed(2);
                         }
                     },
                     { title: "GL Account" },
@@ -662,6 +665,7 @@
 
         async init(): Promise<void> {
             this.showMessage("Loading Group...");
+            this.currencySymbol(await this.ajaxGet<string>("api/Actions/CurrencySymbol"));
             let allGroups = await this.ajaxGet<PE.Nominal.IJournalGroup[]>("api/Actions/JournalGroups");
 
             // Group by Org, Source, Section, [Account, Office, Service, Department, Partner] (selectable items in [])
@@ -776,6 +780,7 @@
             this.toDispose.push(this.startDate, this.endDate);
             this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
                 this.showMessage("Loading Available Journals for Reposting...");
+                let currencySymbol = await this.ajaxGet<string>("api/Actions/CurrencySymbol");
                 let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
                 if (this.table) {
                     // Wipe out existing
@@ -808,7 +813,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         {
@@ -816,7 +821,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         { name: "item", visible: false }
@@ -923,6 +928,7 @@
             this.toDispose.push(this.startDate, this.endDate);
             this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
                 this.showMessage("Loading Available Journals for Reposting...");
+                let currencySymbol = await this.ajaxGet<string>("api/Actions/CurrencySymbol");
                 let data = await this.ajaxGet<PE.Nominal.ICashbookRepostBatch[]>("api/Actions/BankRecRepostList/" + postPeriod.NLPeriodIndex.toString());
                 if (this.table) {
                     // Wipe out existing
@@ -954,7 +960,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         { name: "item", visible: false }
