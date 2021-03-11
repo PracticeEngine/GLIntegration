@@ -33,7 +33,8 @@ namespace PE.Nominal.Web.Controllers
                 var vm = await _pageService.GetViewModel(User.Identity.Name);
                 vm.ProviderType = _viewOptions.ProviderType;
                 vm.SQLIntegration = _viewOptions.ProviderType.Equals("sql", StringComparison.OrdinalIgnoreCase);
-                vm.IntacctHrsJournal = _viewOptions.ProviderType.Equals("intacct", StringComparison.OrdinalIgnoreCase) && _journalOptions.IntacctHourJournals == null ? false : _journalOptions.IntacctHourJournals.Count() > 0;
+                vm.IntacctHrsJournal = _viewOptions.ProviderType.Equals("intacct", StringComparison.OrdinalIgnoreCase) && _journalOptions.IntacctHourJournals != null && _journalOptions.IntacctHourJournals.Count() > 0 ? true : false;
+                vm.ExportOnly = _journalOptions.ExportOnly;
                 return View(vm);
             }
             catch (Exception ex)
@@ -52,7 +53,8 @@ namespace PE.Nominal.Web.Controllers
             var vm = await _pageService.GetViewModel(User.Identity.Name);
             vm.ProviderType = _viewOptions.ProviderType;
             vm.SQLIntegration = _viewOptions.ProviderType.Equals("sql", StringComparison.OrdinalIgnoreCase);
-            vm.IntacctHrsJournal = _viewOptions.ProviderType.Equals("intacct", StringComparison.OrdinalIgnoreCase) && _journalOptions.IntacctHourJournals == null ? false : _journalOptions.IntacctHourJournals.Count() > 0;
+            vm.IntacctHrsJournal = _viewOptions.ProviderType.Equals("intacct", StringComparison.OrdinalIgnoreCase) && _journalOptions.IntacctHourJournals != null && _journalOptions.IntacctHourJournals.Count() > 0 ? true : false;
+            vm.ExportOnly = _journalOptions.ExportOnly;
             return View(vm);
         }
     }

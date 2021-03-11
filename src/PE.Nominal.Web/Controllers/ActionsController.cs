@@ -474,8 +474,8 @@ namespace PE.Nominal.Web.Controllers
         public async Task<IActionResult> ExportJournal()
         {
             try
-            {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+            {                
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery();
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();
@@ -498,7 +498,7 @@ namespace PE.Nominal.Web.Controllers
         {
             try
             {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery(batchId);
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();

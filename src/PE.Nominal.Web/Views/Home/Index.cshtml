@@ -243,12 +243,15 @@
                         <a class="btn btn-default" href="~/api/Actions/Journal.csv" target="_blank" download="Journal.csv">Export</a>
                         <button class="btn btn-default" data-bind="click:flagTransfer">Flag as Transferred</button>
                     }
-                    <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
+                    @if (!Model.ExportOnly)
+                    {
+                        <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
+                    }
                     @if (Model.IntacctHrsJournal)
                     {
                         <button class="btn btn-primary" data-bind="click:statHours">Send Statistics (Hrs)</button>
                     }
-                </div>
+                    </div>
             </div>
         </div>
     </div>
