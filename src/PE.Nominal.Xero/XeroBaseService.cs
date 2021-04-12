@@ -50,20 +50,27 @@ namespace PE.Nominal.XeroGL
 
         protected async Task RefreshAccessToken()
         {
-            string authpassword = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(_config.OAuthClientId + ":" + _config.OAuthClientSecret));
-            var authbody = new FormUrlEncodedContent(new[] {
+            if (!String.IsNullOrEmpty(_config.OAuthRefreshToken))
+            {
+                string authpassword = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(_config.OAuthClientId + ":" + _config.OAuthClientSecret));
+                var authbody = new FormUrlEncodedContent(new[] {
                 new KeyValuePair<string, string>("grant_type", "refresh_token"),
                 new KeyValuePair<string, string>("refresh_token", _config.OAuthRefreshToken)
             });
-            HttpClient authClient = new HttpClient();
-            authClient.BaseAddress = new System.Uri("https://identity.xero.com");
-            authClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authpassword);
-            var authResponse = await authClient.PostAsync("/connect/token", authbody);
-            string jsonContent = await authResponse.Content.ReadAsStringAsync();
-            XeroToken tok = JsonConvert.DeserializeObject<XeroToken>(jsonContent);
-            _config.OAuthAccessToken = tok.AccessToken;
-            _config.OAuthExpiry = DateTime.Now.AddSeconds(tok.ExpiresIn);
-            _config.OAuthRefreshToken = tok.RefreshToken;
+                HttpClient authClient = new HttpClient();
+                authClient.BaseAddress = new System.Uri("https://identity.xero.com");
+                authClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authpassword);
+                try
+                {
+                    var authResponse = await authClient.PostAsync("/connect/token", authbody);
+                    string jsonContent = await authResponse.Content.ReadAsStringAsync();
+                    XeroToken tok = JsonConvert.DeserializeObject<XeroToken>(jsonContent);
+                    _config.OAuthAccessToken = tok.AccessToken;
+                    _config.OAuthExpiry = DateTime.Now.AddSeconds(tok.ExpiresIn);
+                    _config.OAuthRefreshToken = tok.RefreshToken;
+                }
+                catch { }
+            }
         }
     }
 }
