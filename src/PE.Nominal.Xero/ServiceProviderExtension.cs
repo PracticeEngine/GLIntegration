@@ -16,10 +16,10 @@ namespace PE.Nominal
         /// </summary>
         /// <param name="services"></param>
         /// <param name="config"></param>
-        public static void AddIntacctGLProvider(this IServiceCollection services, IConfiguration config)
+        public static void AddXeroGLProvider(this IServiceCollection services, IConfiguration config)
         {
             services.AddTransient<IProviderType, XeroProviderType>();
-            services.Configure<XeroConfig>(config.GetSection("XeroApi"));
+            services.Configure<XeroConfig>(config.GetSection("Xero"));
         }
     }
 }

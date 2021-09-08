@@ -87,7 +87,7 @@ namespace PE.Nominal.Web.Controllers
 
                 if (_options.IncludeAuth)
                 {
-                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_rpt_Journal", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
+                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_Detail_Report", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
                     var response1 = await _client96.GenerateReportAsync(request1);
                     if (!String.IsNullOrWhiteSpace(response1.Error))
                     {
@@ -177,7 +177,7 @@ namespace PE.Nominal.Web.Controllers
 
                 if (_options.IncludeAuth)
                 {
-                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_rpt_Journal", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
+                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_Journal_Reprint", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
                     var response1 = await _client96.GenerateReportAsync(request1);
                     if (!String.IsNullOrWhiteSpace(response1.Error))
                     {
@@ -189,7 +189,7 @@ namespace PE.Nominal.Web.Controllers
                 }
                 else
                 {
-                    var request1 = new RepGen95.GenerateReportRequest("Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_rpt_Journal", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
+                    var request1 = new RepGen95.GenerateReportRequest("Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_Journal_Reprint", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
                     var response1 = await _client95.GenerateReportAsync(request1);
                     if (!String.IsNullOrWhiteSpace(response1.Error))
                     {
@@ -230,7 +230,7 @@ namespace PE.Nominal.Web.Controllers
 
                 if (_options.IncludeAuth)
                 {
-                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_rpt_Journal", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
+                    var request1 = new RepGen96.GenerateReportRequest(_authInfo, "Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_Journal_Reprint_Details", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
                     var response1 = await _client96.GenerateReportAsync(request1);
                     if (!String.IsNullOrWhiteSpace(response1.Error))
                     {
@@ -243,7 +243,7 @@ namespace PE.Nominal.Web.Controllers
                 }
                 else
                 {
-                    var request1 = new RepGen95.GenerateReportRequest("Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_rpt_Journal", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
+                    var request1 = new RepGen95.GenerateReportRequest("Report_Menu_Params", new object[] { "Journal_Report.rpx", -100, "pe_NL_Journal_Reprint_Details", FlatParams, SortOrder, Filter, Grouping, _connOptions.EncryptedConnectionString }, "GL System", "-100", false, String.Empty);
                     var response1 = await _client95.GenerateReportAsync(request1);
                     if (!String.IsNullOrWhiteSpace(response1.Error))
                     {

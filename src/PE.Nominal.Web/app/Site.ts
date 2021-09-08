@@ -261,6 +261,7 @@
         mapping: boolean;
         posting: boolean;
         bankrec: boolean;
+        mtd: boolean;
         constructor() {
             console.info("Home");
             super();
@@ -269,6 +270,7 @@
             this.mapping = this.hasAccess("MissingMap");
             this.posting = this.hasAccess("Journal");
             this.bankrec = this.hasAccess("BankRec");
+            this.mtd = this.hasAccess("MTD");
         }
 
     }
@@ -555,6 +557,7 @@
         children: KnockoutObservableArray<GroupNode>;
         selectedItem: KnockoutObservable<GroupNode>;
         editor: KnockoutObservable<MapEditor>;
+        currencySymbol: KnockoutObservable<string>;
         table: DataTables.Api;
         constructor() {
             console.info("Journal");
@@ -562,6 +565,7 @@
             this.children = ko.observableArray([]);
             this.selectedItem = ko.observable(undefined);
             this.editor = ko.observable(undefined);
+            this.currencySymbol = ko.observable("");
             this.toDispose.push(this.selectedItem.subscribe((val) => {
                 if (val && val.filter) {
                     this.loadItem(val);
@@ -591,6 +595,7 @@
         }
 
         async loadItem(item: GroupNode): Promise<void> {
+            let currencySymbol = this.currencySymbol();
             this.showMessage("Loading Group...");
             let data = await this.ajaxSendReceive<PE.Nominal.IJournalMap[], Partial<PE.Nominal.IJournalGroup>>("api/Actions/JournalList", item.group);
             if (this.table) {
@@ -633,7 +638,7 @@
                         className: "text-right",
                         render: function (num) {
                             num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                            return "$ " + parseFloat(num).toFixed(2);
+                            return currencySymbol + " " + parseFloat(num).toFixed(2);
                         }
                     },
                     { title: "GL Account" },
@@ -660,6 +665,7 @@
 
         async init(): Promise<void> {
             this.showMessage("Loading Group...");
+            this.currencySymbol(await this.ajaxGet<string>("api/Actions/CurrencySymbol"));
             let allGroups = await this.ajaxGet<PE.Nominal.IJournalGroup[]>("api/Actions/JournalGroups");
 
             // Group by Org, Source, Section, [Account, Office, Service, Department, Partner] (selectable items in [])
@@ -774,6 +780,7 @@
             this.toDispose.push(this.startDate, this.endDate);
             this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
                 this.showMessage("Loading Available Journals for Reposting...");
+                let currencySymbol = await this.ajaxGet<string>("api/Actions/CurrencySymbol");
                 let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
                 if (this.table) {
                     // Wipe out existing
@@ -784,7 +791,7 @@
 
                 this.table = $("#gltable").DataTable({
                     select: {
-                        style: "row",
+                        style: "single",
                         info: false
                     },
                     searching: false,
@@ -806,7 +813,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         {
@@ -814,7 +821,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         { name: "item", visible: false }
@@ -921,6 +928,7 @@
             this.toDispose.push(this.startDate, this.endDate);
             this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
                 this.showMessage("Loading Available Journals for Reposting...");
+                let currencySymbol = await this.ajaxGet<string>("api/Actions/CurrencySymbol");
                 let data = await this.ajaxGet<PE.Nominal.ICashbookRepostBatch[]>("api/Actions/BankRecRepostList/" + postPeriod.NLPeriodIndex.toString());
                 if (this.table) {
                     // Wipe out existing
@@ -931,7 +939,7 @@
 
                 this.table = $("#gltable").DataTable({
                     select: {
-                        style: "row",
+                        style: "single",
                         info: false
                     },
                     searching: false,
@@ -952,7 +960,7 @@
                             className: "text-right",
                             render: function (num) {
                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                return "$ " + parseFloat(num).toFixed(2);
+                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                             }
                         },
                         { name: "item", visible: false }
@@ -1215,6 +1223,34 @@
             await this.ajaxSendOnly("api/IntacctSync/SyncAll" + newQS, {});
             alert("Synchronization has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.clearMessage();
+        }
+    }
+
+    /**
+     * MTD Sync VM
+     */
+    export class MTD extends BaseVM {
+        startDate: string;
+        endDate: string;
+        constructor() {
+            console.info("MTD");
+            super(false);
+            let datesData = this.getSession<PE.Nominal.ISelectedDates>("SelectedDates");
+            this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.isReady(true);
+        }
+
+        async run(): Promise<void> {
+            this.showMessage("Running MTD Sync...");
+            await this.ajaxSendOnly("api/Actions/MTDSync", {});
+            this.clearMessage();
+            alert("Making Tax Digital Sync has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+            this.goHome();
         }
     }
 }

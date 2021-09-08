@@ -26,13 +26,15 @@ namespace PE.Nominal.Web.Controllers
         private readonly ILogger _logger;
         private readonly ViewOptions _options;
         private readonly ActionsService _actionService;
+        private readonly MTDService _mtdService;
         private readonly IProviderType _glProvider;
         private readonly JournalOptions _journalOptions;
 
-        public ActionsController(ILogger<ActionsController> logger, ActionsService actionService, IProviderType glProvider, IOptions<ViewOptions> options, IOptions<JournalOptions> journalOptions)
+        public ActionsController(ILogger<ActionsController> logger, ActionsService actionService, MTDService mtdService, IProviderType glProvider, IOptions<ViewOptions> options, IOptions<JournalOptions> journalOptions)
         {
             _logger = logger;
             _actionService = actionService;
+            _mtdService = mtdService;
             _glProvider = glProvider;
             _options = options.Value;
             _journalOptions = journalOptions.Value;
@@ -118,6 +120,27 @@ namespace PE.Nominal.Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("CurrencySymbol")]
+        public async Task<IActionResult> CurrencySymbol()
+        {
+            try
+            {
+                var data = _options.CurrencySymbol;
+
+                if (string.IsNullOrWhiteSpace(data))
+                    data = "$";
+
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+
                 return BadRequest(ex.Message);
             }
         }
@@ -451,8 +474,8 @@ namespace PE.Nominal.Web.Controllers
         public async Task<IActionResult> ExportJournal()
         {
             try
-            {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+            {                
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery();
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();
@@ -475,7 +498,7 @@ namespace PE.Nominal.Web.Controllers
         {
             try
             {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery(batchId);
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();
@@ -826,5 +849,92 @@ namespace PE.Nominal.Web.Controllers
 
         #endregion Methods for Repost Journal
 
+        #region Making Tax Digital
+
+
+        [HttpPost]
+        [Route("MTDSync")]
+        public IActionResult MTDSync()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunMTDSync(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        public async Task RunMTDSync(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+
+            try
+            {
+                await _mtdService.ExtractMTDCmd();
+            }
+            catch (SystemException ex)
+            {
+                context.WriteLine($"MTD Extract failed to run due to {ex.Message}\n\n" + ex.StackTrace);
+            }
+
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    try
+                    {
+                        var clients = await _mtdService.MTDClientsQuery(org.PracID);
+                        var invoices = await _mtdService.MTDInvoicesQuery(org.PracID);
+
+                        context.WriteLine($"Preparing to sync MTD data for organisation {org.PracName}.");
+
+                        var processedInvoices = await _glProvider.PostMTDCmd(org.PracID, clients, invoices, context);
+
+                        context.WriteLine($"Finished syncing MTD data for organisation {org.PracName}.");
+
+                        await _mtdService.MTDFlagAsProcessedCmd(processedInvoices);
+
+                        switch (processedInvoices.Count())
+                        {
+                            case 0:
+                                context.WriteLine($"NO entries processed for organisation {org.PracName}.");
+                                break;
+                            case 1:
+                                context.WriteLine($"Finished marking 1 entry as processed for organisation {org.PracName}.");
+                                break;
+                            default:
+                                context.WriteLine($"Finished marking {processedInvoices.Count()} entries as processed for organisation {org.PracName}.");
+                                break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"MTD Errors during transfer of organisation {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organisation {org.PracName} failed to transfer due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organisation {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+
+        #endregion Making Tax Digital
     }
 }

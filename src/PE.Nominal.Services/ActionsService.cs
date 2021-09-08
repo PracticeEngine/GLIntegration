@@ -104,7 +104,7 @@ namespace PE.Nominal
             await nominalDAL.SaveAccountMappingCmd(MapIndex, AccountCode, AccountTypeCode).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<GLMapping>> NLMappingsQuery()
+        public async Task<IEnumerable<MissingMap>> NLMappingsQuery()
         {
             return await nominalDAL.NLMappingsQuery().ConfigureAwait(false);
         }
@@ -123,7 +123,7 @@ namespace PE.Nominal
             return await nominalDAL.TransferJournalQuery(Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<JournalExtract>> ExportJournalQuery(int BatchID = 0)
+        public async Task<List<dynamic>> ExportJournalQuery(int BatchID = 0)
         {
             return await nominalDAL.ExtractJournalQuery(BatchID).ConfigureAwait(false);
         }

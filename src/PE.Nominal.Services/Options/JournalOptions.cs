@@ -14,5 +14,7 @@ namespace PE.Nominal.Options
 
 
         public IEnumerable<string> IntacctHourJournals { get; set; }
+
+        public bool ExportOnly { get; set; }
     }
 }

@@ -76,6 +76,7 @@
     <Folder Include="Stored Procedures\SQLProviders\GreatPlains" />
     <Folder Include="Stored Procedures\SQLProviders\SunSystems" />
     <Folder Include="Stored Procedures\PostCreation" />
+    <Folder Include="Stored Procedures\MTD" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="PostDeploy\_PostDeploy.sql" />
@@ -187,6 +188,13 @@
     <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_LOD.sql" />
     <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_WIP.sql" />
     <Build Include="Stored Procedures\PostCreation\pe_NL_Post_Create_WIP_Other.sql" />
+    <Build Include="Tables\tblTranNominalMTD.sql" />
+    <Build Include="Stored Procedures\MTD\pe_NL_MTD_Extract.sql" />
+    <Build Include="Stored Procedures\MTD\pe_NL_MTD_Export_Clients.sql" />
+    <Build Include="Stored Procedures\MTD\pe_NL_MTD_Export_Invoices.sql" />
+    <Build Include="Stored Procedures\MTD\pe_NL_MTD_Export_Invoice_Lines.sql" />
+    <Build Include="Tables\tblTranNominalMTDControl.sql" />
+    <Build Include="Stored Procedures\MTD\pe_NL_MTD_Mark_As_Processed.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">

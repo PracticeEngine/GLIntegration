@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PE.Nominal
 {
+    /// <summary>
+    /// The Basic Client Info for syncing debtors data
+    /// </summary>
     public class MTDClient
     {
         /// <summary>
-        /// ID of the client in the GL system
-        /// </summary>
-        public string GLClientID { get; set; }
-
-        /// <summary>
         /// ID of the client in PE
         /// </summary>
-        public int PEClientID { get; set; }
+        public int ContIndex { get; set; }
 
         /// <summary>
         /// The Code of the client

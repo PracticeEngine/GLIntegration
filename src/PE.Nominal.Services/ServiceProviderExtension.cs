@@ -20,6 +20,7 @@ namespace PE.Nominal
         public static void AddNominalLedgerServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddTransient<ActionsService>();
+            services.AddTransient<MTDService>();
             services.AddTransient<LoginService>();
             services.AddTransient<PageService>();
             services.Configure<LoginOptions>(config.GetSection("PEAuth"));
@@ -36,7 +37,7 @@ namespace PE.Nominal
         public static void AddPELoginSupport(this IServiceCollection services, IConfiguration config)
         {
             // Add Password Hashing If LocalLogin is Enabled
-            if (config.GetValue<bool>("PEAuth:EnableLocalLogin"))
+            if (config.GetValue<bool>("PEAuth:EnableGLLocalLogin"))
             {
                 services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                     .AddCookie(options =>

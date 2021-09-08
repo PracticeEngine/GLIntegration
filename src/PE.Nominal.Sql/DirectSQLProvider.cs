@@ -81,7 +81,7 @@ namespace PE.Nominal
             throw new NotImplementedException();
         }
 
-        public Task PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, IEnumerable<MTDInvoiceLine> lines, PerformContext performContext)
+        public Task<IEnumerable<int>> PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, PerformContext performContext)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -25,6 +26,21 @@ namespace PE.Nominal.XeroGL
         /// Turns on Logging to App_Data Folder
         /// </summary>
         public bool LogToAppData { get; set; }
+
+        /// <summary>
+        /// Post as Draft
+        /// </summary>
+        public bool? PostAsDraft { get; set; }
+
+        public string OAuthClientId { get; set; }
+
+        public string OAuthClientSecret { get; set; }
+
+        public string OAuthRedirectURI { get; set; }
+        public string OAuthAccessToken { get; set; }
+        public string OAuthRefreshToken { get; set; }
+        public string OAuthScope { get; set; }
+        public DateTime OAuthExpiry { get; set; }
     }
 
     public class XeroOrgConfig
@@ -34,25 +50,36 @@ namespace PE.Nominal.XeroGL
         /// </summary>
         public int Org { get; set; }
 
-        /// <summary>
-        /// The Intacct URL to use
-        /// </summary>
-        public string XeroURL { get; set; }
+        public string OAuthTenantId { get; set; }
 
-        /// <summary>
-        /// The Intacct URL to use
-        /// </summary>
-        public string XeroCertPath { get; set; }
+        public string OAuthTenantName { get; set; }
 
-        /// <summary>
-        /// The Sender ID for Web
-        /// </summary>
-        public string SenderID { get; set; }
+    }
 
-        /// <summary>
-        /// The Password for the Sender ID for web
-        /// </summary>
-        public string SenderPassword { get; set; }
-        
+    public class XeroToken
+    {
+        [JsonProperty("access_token")]
+        public string AccessToken { get; set; }
+
+        [JsonProperty("id_token")]
+        public string IdToken { get; set; }
+
+        [JsonProperty("token_type")]
+        public string TokenType { get; set; }
+
+        [JsonProperty("expires_in")]
+        public int ExpiresIn { get; set; }
+
+        [JsonProperty("refresh_token")]
+        public string RefreshToken { get; set; }
+    }
+
+    public class XeroTenant
+    {
+        [JsonProperty("tenantId")]
+        public string TenantId { get; set; }
+
+        [JsonProperty("tenantName")]
+        public string TenantName { get; set; }
     }
 }

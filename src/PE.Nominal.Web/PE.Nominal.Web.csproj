@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-    <TypeScriptToolsVersion>2.6</TypeScriptToolsVersion>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TypeScriptToolsVersion>2.7</TypeScriptToolsVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,17 +20,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="7.0.0" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.6.17" />
-    <PackageReference Include="Hangfire.Console" Version="1.3.10" />
-    <PackageReference Include="HangFire.SqlServer" Version="1.6.17" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
-    <PackageReference Include="NLog" Version="4.5.3" />
-    <PackageReference Include="NLog.Web.AspNetCore" Version="4.5.2" />
-    <PackageReference Include="System.ServiceModel.Duplex" Version="4.4.0" />
-    <PackageReference Include="System.ServiceModel.Http" Version="4.4.0" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.4.0" />
-    <PackageReference Include="System.ServiceModel.Security" Version="4.4.0" />
+    <PackageReference Include="CsvHelper" Version="12.1.2" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.6" />
+    <PackageReference Include="Hangfire.Console" Version="1.4.2" />
+    <PackageReference Include="HangFire.SqlServer" Version="1.7.6" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="2.1.1" />
+    <PackageReference Include="NLog" Version="4.6.6" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="4.8.4" />
+    <PackageReference Include="System.ServiceModel.Duplex" Version="4.5.3" />
+    <PackageReference Include="System.ServiceModel.Http" Version="4.5.3" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.5.3" />
+    <PackageReference Include="System.ServiceModel.Security" Version="4.5.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,7 @@
     <ProjectReference Include="..\PE.Nominal.Intacct\PE.Nominal.Intacct.csproj" />
     <ProjectReference Include="..\PE.Nominal.Services\PE.Nominal.Services.csproj" />
     <ProjectReference Include="..\PE.Nominal.Sql\PE.Nominal.Sql.csproj" />
+    <ProjectReference Include="..\PE.Nominal.Xero\PE.Nominal.Xero.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,6 +59,22 @@
 
 <PropertyGroup>
   <UserSecretsId>PE-Nominal-Web-9dd77c86-1754-11e8-b642-0ed5f89f718b</UserSecretsId>
+</PropertyGroup>
+
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <TypeScriptTarget>ES5</TypeScriptTarget>
+  <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
+  <TypeScriptModuleKind />
+  <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
+  <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+  <TypeScriptRemoveComments>False</TypeScriptRemoveComments>
+  <TypeScriptOutFile />
+  <TypeScriptOutDir />
+  <TypeScriptGeneratesDeclarations>False</TypeScriptGeneratesDeclarations>
+  <TypeScriptNoEmitOnError>True</TypeScriptNoEmitOnError>
+  <TypeScriptSourceMap>True</TypeScriptSourceMap>
+  <TypeScriptMapRoot />
+  <TypeScriptSourceRoot />
 </PropertyGroup>
 
 </Project>

@@ -42,7 +42,8 @@ SELECT 314, 13, N'Reprint Journal', N'Reprint Journal', N'content/images/taskpad
 SELECT 315, 13, N'Repost Journal', N'Repost Journal', N'content/images/taskpadicons/organigram_zoom_48.png', N'_RepostJournal', N'content/images/taskpadicons/organigram_zoom_128.png' UNION ALL
 SELECT 316, 13, N'Reprint Journal Details', N'Reprint Journal Details', N'content/images/taskpadicons/line_chart_reload_48.png', N'_ReprintJournalDetails', N'content/images/taskpadicons/line_chart_reload_128.png' UNION ALL
 SELECT 317, 13, N'Expense Posting', N'Expense Posting', N'content/images/taskpadicons/messages_next_48.png', N'_ExpPosting', N'content/images/taskpadicons/messages_next_128.png' UNION ALL
-SELECT 318, 13, N'Intacct Sync', N'Intacct Sync', N'content/images/taskpadicons/messages_next_48.png', N'_IntacctSync', N'content/images/taskpadicons/messages_next_128.png' 
+SELECT 318, 13, N'Intacct Sync', N'Intacct Sync', N'content/images/taskpadicons/messages_next_48.png', N'_IntacctSync', N'content/images/taskpadicons/messages_next_128.png'  UNION ALL
+SELECT 319, 13, N'Making Tax Digital', N'Making Tax Digital', N'content/images/taskpadicons/messages_next_48.png', N'_MTD', N'content/images/taskpadicons/messages_next_128.png' 
 ) GTP
 LEFT OUTER JOIN [dbo].[tblTaskpadItems] TP ON GTP.[TaskpadItemId] = TP.[TaskpadItemId]
 WHERE TP.[TaskpadItemId] IS NULL
