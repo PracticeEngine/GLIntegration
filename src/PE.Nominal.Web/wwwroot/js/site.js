@@ -823,6 +823,7 @@ var PE;
                 _this.children = ko.observableArray([]);
                 _this.selectedItem = ko.observable(undefined);
                 _this.editor = ko.observable(undefined);
+                _this.currencySymbol = ko.observable("");
                 _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
                     if (val && val.filter) {
                         _this.loadItem(val);
@@ -849,11 +850,12 @@ var PE;
             };
             Journal.prototype.loadItem = function (item) {
                 return __awaiter(this, void 0, void 0, function () {
-                    var data;
+                    var currencySymbol, data;
                     var _this = this;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
+                                currencySymbol = this.currencySymbol();
                                 this.showMessage("Loading Group...");
                                 return [4, this.ajaxSendReceive("api/Actions/JournalList", item.group)];
                             case 1:
@@ -896,7 +898,7 @@ var PE;
                                             className: "text-right",
                                             render: function (num) {
                                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                                return "$ " + parseFloat(num).toFixed(2);
+                                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                                             }
                                         },
                                         { title: "GL Account" },
@@ -952,14 +954,18 @@ var PE;
                             };
                         });
                     }
-                    var allGroups, groups;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
+                    var _a, allGroups, groups;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
                             case 0:
                                 this.showMessage("Loading Group...");
-                                return [4, this.ajaxGet("api/Actions/JournalGroups")];
+                                _a = this.currencySymbol;
+                                return [4, this.ajaxGet("api/Actions/CurrencySymbol")];
                             case 1:
-                                allGroups = _a.sent();
+                                _a.apply(this, [_b.sent()]);
+                                return [4, this.ajaxGet("api/Actions/JournalGroups")];
+                            case 2:
+                                allGroups = _b.sent();
                                 groups = [
                                     { unq: "NomOrg", name: "OrgName", filter: false },
                                     { unq: "NomSource", name: "NomSource", filter: false },
@@ -1224,14 +1230,17 @@ var PE;
                 });
                 _this.toDispose.push(_this.startDate, _this.endDate);
                 _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
-                    var data;
+                    var currencySymbol, data;
                     var _this = this;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 this.showMessage("Loading Available Journals for Reposting...");
-                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                                return [4, this.ajaxGet("api/Actions/CurrencySymbol")];
                             case 1:
+                                currencySymbol = _a.sent();
+                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 2:
                                 data = _a.sent();
                                 if (this.table) {
                                     $("#gltable").DataTable().destroy();
@@ -1262,7 +1271,7 @@ var PE;
                                             className: "text-right",
                                             render: function (num) {
                                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                                return "$ " + parseFloat(num).toFixed(2);
+                                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                                             }
                                         },
                                         {
@@ -1270,7 +1279,7 @@ var PE;
                                             className: "text-right",
                                             render: function (num) {
                                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                                return "$ " + parseFloat(num).toFixed(2);
+                                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                                             }
                                         },
                                         { name: "item", visible: false }
@@ -1657,14 +1666,17 @@ var PE;
                 });
                 _this.toDispose.push(_this.startDate, _this.endDate);
                 _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
-                    var data;
+                    var currencySymbol, data;
                     var _this = this;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
                                 this.showMessage("Loading Available Journals for Reposting...");
-                                return [4, this.ajaxGet("api/Actions/BankRecRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                                return [4, this.ajaxGet("api/Actions/CurrencySymbol")];
                             case 1:
+                                currencySymbol = _a.sent();
+                                return [4, this.ajaxGet("api/Actions/BankRecRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 2:
                                 data = _a.sent();
                                 if (this.table) {
                                     $("#gltable").DataTable().destroy();
@@ -1694,7 +1706,7 @@ var PE;
                                             className: "text-right",
                                             render: function (num) {
                                                 num = isNaN(num) || num === '' || num === null ? 0.00 : num;
-                                                return "$ " + parseFloat(num).toFixed(2);
+                                                return currencySymbol + " " + parseFloat(num).toFixed(2);
                                             }
                                         },
                                         { name: "item", visible: false }

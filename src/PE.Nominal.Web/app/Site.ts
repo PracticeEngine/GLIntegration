@@ -1,5 +1,5 @@
 ﻿namespace PE.Nominal {
-
+ 
     /** Standard Enum Pub/Sub Topics */
     enum KOTOPIC {
         PAGE
