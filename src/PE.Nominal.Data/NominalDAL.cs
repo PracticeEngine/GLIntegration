@@ -1,6 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
+using System.Dynamic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -152,9 +159,9 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Map_Line_Update {0}, {1}, {2}", MapIndex, AccountCode, AccountTypeCode).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<GLMapping>> NLMappingsQuery()
+        public async Task<IEnumerable<MissingMap>> NLMappingsQuery()
         {
-            var results = await context.Database.SqlQueryAsync<GLMapping>("pe_NL_Mapping_List").ConfigureAwait(false);
+            var results = await context.Database.SqlQueryAsync<MissingMap>("pe_NL_Mapping_List").ConfigureAwait(false);
             return results;
         }
         public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()
@@ -192,10 +199,52 @@ namespace PE.Nominal
             return results;
         }
 
-        public async Task<IEnumerable<JournalExtract>> ExtractJournalQuery(int BatchID = 0)
+        public async Task<List<dynamic>> ExtractJournalQuery(int BatchID = 0)
         {
-            var results = await context.Database.SqlQueryAsync<JournalExtract>("pe_NL_Journal_Export {0}", BatchID).ConfigureAwait(false);
-            return results;
+            SqlConnection dbConnection = new SqlConnection(((SqlConnection)context.Database.GetDbConnection()).ConnectionString);
+            using (var cmd = dbConnection.CreateCommand())
+            {
+                List<dynamic> lines = new List<dynamic>();
+                try
+                {
+                    cmd.CommandText = "pe_NL_Journal_Export @BatchID";
+                    cmd.Parameters.AddWithValue("@BatchID", BatchID);
+                    await cmd.Connection.OpenAsync();
+                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var record = new ExpandoObject() as IDictionary<string, Object>;
+                            for (var f = 0; f < reader.FieldCount; f++)
+                            {
+                                string name = reader.GetName(f);
+                                if (name == "")
+                                {
+                                    name = "Field" + f.ToString();
+                                }
+                                int suffix = 1;
+                                while (record.ContainsKey(name))
+                                {
+                                    name = name + suffix.ToString();
+                                    suffix++;
+                                }
+                                record.Add(name, reader.GetValue(f));
+                            }
+
+                            lines.Add(record);
+                        }
+                    }
+                    if (dbConnection.State == ConnectionState.Open)
+                    {
+                        dbConnection.Close();
+                    }
+                }
+                catch(System.Exception exc)
+                {
+                    string s = exc.Message;
+                }
+                return lines;
+            }
         }
 
         public async Task<IEnumerable<JournalExtract>> TransferJournalQuery(int Org, int BatchID = 0, string Journal = null, string HangfireJobId = null)

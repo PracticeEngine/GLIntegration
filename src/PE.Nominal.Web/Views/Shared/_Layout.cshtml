@@ -11,7 +11,15 @@
     <link rel="stylesheet" href="~/css/select.bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/font-awesome.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
-</head>
+    @{ if (Model.ProviderType == "Xero")
+        {
+            @inject Microsoft.Extensions.Options.IOptions<PE.Nominal.XeroGL.XeroConfig> XeroOptions
+            <meta name="xero-client-id" content="@Html.Raw(XeroOptions.Value.OAuthClientId)">
+            <meta name="xero-scopes" content="offline_access,accounting.transactions,accounting.contacts">
+            <meta name="xero-redirect-uri" content="@Html.Raw(XeroOptions.Value.OAuthRedirectURI)">
+        }
+    }
+    </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container">
@@ -61,13 +69,18 @@
     <script src="~/js/dataTables.bootstrap.min.js"></script>
     <script src="~/js/dataTables.select.min.js"></script>
     <script src="~/js/es6-promise.auto.min.js"></script>
+    @{ if (Model.ProviderType == "Xero")
+        {
+            <script src="https://edge.xero.com/platform/sso/xero-sso.js" async defer></script>
+        } 
+    }
     <script>
         sessionStorage.setItem("rootURL", "@Html.Raw(Url.Content("~/"))");
-    </script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script type="text/javascript">
+            </script>
+            <script src="~/js/site.js" asp-append-version="true"></script>
+            <script type="text/javascript">
         sessionStorage.setItem("SelectedDates", '@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Dates))');
         sessionStorage.setItem("MenuItems", '@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TaskPads))');
-    </script>
-</body>
+        </script>
+    </body>
 </html>

@@ -124,6 +124,27 @@ namespace PE.Nominal.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("CurrencySymbol")]
+        public async Task<IActionResult> CurrencySymbol()
+        {
+            try
+            {
+                var data = _options.CurrencySymbol;
+
+                if (string.IsNullOrWhiteSpace(data))
+                    data = "$";
+
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+
+                return BadRequest(ex.Message);
+            }
+        }
+
         #endregion Methods for NominalControl (Integration Setup)
 
         #region Methods for IntegrationExtract (Integration Extract)
@@ -562,8 +583,8 @@ namespace PE.Nominal.Web.Controllers
         public async Task<IActionResult> ExportJournal()
         {
             try
-            {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+            {                
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery();
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();
@@ -586,7 +607,7 @@ namespace PE.Nominal.Web.Controllers
         {
             try
             {
-                List<JournalExtract> csvData = new List<JournalExtract>();
+                List<dynamic> csvData = new List<dynamic>();
                 var lines = await _actionService.ExportJournalQuery(batchId);
                 csvData.AddRange(lines);
                 var csvBuilder = new StringBuilder();

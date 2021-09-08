@@ -1,6 +1,15 @@
 ﻿@model PE.Nominal.ViewModels.SPAViewModel
 <!-- ko component:bodyVM -->
 <!-- /ko -->
+@{ if (Model.ProviderType == "Xero")
+    {
+        @inject Microsoft.Extensions.Options.IOptions<PE.Nominal.XeroGL.XeroConfig> XeroOptions
+        if (String.IsNullOrEmpty(XeroOptions.Value.OAuthAccessToken))
+        {
+            <span data-xero-sso data-label="Sign in with Xero"></span>
+        }
+    }
+}
 
 <template id="body-Home">
     <div class="row">
@@ -26,6 +35,7 @@
         </div>
     </div>
 </template>
+
 <template id="body-IntegrationExtract">
     <div class="row">
         <div class="col-md-offset-3 col-md-6">
@@ -236,12 +246,15 @@
                         <a class="btn btn-default" href="~/api/Actions/Journal.csv" target="_blank" download="Journal.csv">Export</a>
                         <button class="btn btn-default" data-bind="click:flagTransfer">Flag as Transferred</button>
                     }
-                    <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
+                    @if (!Model.ExportOnly)
+                    {
+                        <button class="btn btn-primary" data-bind="click:transfer">Transfer</button>
+                    }
                     @if (Model.IntacctHrsJournal)
                     {
                         <button class="btn btn-primary" data-bind="click:statHours">Send Statistics (Hrs)</button>
                     }
-                </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -752,8 +765,16 @@
                     <p>The sync process will create new Debtor accounts and send the latest VAT Invoice data.</p>
                 </div>
                 <div class="panel-footer text-right">
-                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
-                    <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                    @{ if (Model.ProviderType == "Xero")
+                        {
+                            @inject Microsoft.Extensions.Options.IOptions<PE.Nominal.XeroGL.XeroConfig> XeroOptions
+                            if (!String.IsNullOrEmpty(XeroOptions.Value.OAuthAccessToken))
+                            {
+                                <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                                <button class="btn btn-primary" data-bind="click:run">Sync</button>
+                            }
+                        }
+                    }
                 </div>
             </div>
         </div>

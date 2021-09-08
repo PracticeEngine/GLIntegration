@@ -1,16 +1,12 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Net.Http;
 using System.Threading.Tasks;
-using Xero.Api;
-using Xero.Api.Core;
-using Xero.Api.Infrastructure.Authenticators;
-using Xero.Api.Infrastructure.Interfaces;
-using Xero.Api.Infrastructure.OAuth;
-using Xero.Api.Infrastructure.RateLimiter;
+using Xero.NetStandard.OAuth2.Client;
+using Xero.NetStandard.OAuth2.Config;
 
 namespace PE.Nominal.XeroGL
 {
@@ -52,16 +48,29 @@ namespace PE.Nominal.XeroGL
             return orgConfig;
         }
 
-        protected IXeroCoreApi GetClient(int Org)
+        protected async Task RefreshAccessToken()
         {
-            var orgConfig = GetOrgConfig(Org);
-
-            return new XeroCoreApi(orgConfig.XeroURL, new PrivateAuthenticator(orgConfig.XeroCertPath),
-                new Consumer(orgConfig.SenderID, orgConfig.SenderPassword), null, new RateLimiter(TimeSpan.FromMinutes(1), 50));
-/*
-            return new XeroCoreApi("https://api.xero.com", new PrivateAuthenticator(@"C:\Program Files\OpenSSL-Win64\bin\xero_pekey.pfx"),
-                new Consumer("MFVXVWJY61DA8ZEKXNDDL8CQRYGLHS", "1HBYQBFVQWERWLOIVJ3OJWJFPGJVCH"));
-*/
+            if (!String.IsNullOrEmpty(_config.OAuthRefreshToken))
+            {
+                string authpassword = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(_config.OAuthClientId + ":" + _config.OAuthClientSecret));
+                var authbody = new FormUrlEncodedContent(new[] {
+                new KeyValuePair<string, string>("grant_type", "refresh_token"),
+                new KeyValuePair<string, string>("refresh_token", _config.OAuthRefreshToken)
+            });
+                HttpClient authClient = new HttpClient();
+                authClient.BaseAddress = new System.Uri("https://identity.xero.com");
+                authClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authpassword);
+                try
+                {
+                    var authResponse = await authClient.PostAsync("/connect/token", authbody);
+                    string jsonContent = await authResponse.Content.ReadAsStringAsync();
+                    XeroToken tok = JsonConvert.DeserializeObject<XeroToken>(jsonContent);
+                    _config.OAuthAccessToken = tok.AccessToken;
+                    _config.OAuthExpiry = DateTime.Now.AddSeconds(tok.ExpiresIn);
+                    _config.OAuthRefreshToken = tok.RefreshToken;
+                }
+                catch { }
+            }
         }
     }
 }
