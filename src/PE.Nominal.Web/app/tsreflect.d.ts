@@ -1,4 +1,4 @@
-declare module PE.Nominal {
+declare namespace PE.Nominal {
 	interface ICashbookExtract {
 		NomBankId: string | null;
 		BatchID: number;
@@ -17,10 +17,60 @@ declare module PE.Nominal {
 		LodgeBatch: number;
 		NumDep: number;
 		ValDep: number;
-	}
+    }
+    interface IDetailGroup {
+        NLPeriodIndex: number;
+        NLOrg: number;
+        NLSource: string | null;
+        NLSection: string | null;
+        NLAccount: string | null;
+        NLOffice: string | null;
+        NLDept: string | null;
+        NLService: string | null;
+        NLPartner: number | null;
+        OrgName: string | null;
+        ServiceName: string | null;
+        OfficeName: string | null;
+        PartnerName: string | null;
+        DepartmentName: string | null;
+    }
+    interface IDetailLine {
+        NLIndex: number;
+        NLPeriodIndex: number;
+        NLOrg: number;
+        NLSource: string | null;
+        NLSection: string | null;
+        NLAccount: string | null;
+        NLDate: string | null;
+        NomPostAcc: string | null;
+        TransRefAlpha: string | null;
+        Amount: number | null;
+        TransTypeDescription: string | null;
+    }
 	interface IDisbCode {
 		ChargeCode: string | null;
 		ChargeName: string | null;
+	}
+	interface IExpenseLines {
+		NomExpIndex: number;
+		PeriodIndex: number;
+		ExpOrg: number;
+		DisbCode: string | null;
+		OrgName: string | null;
+		DisbName: string | null;
+		PostAcc: string | null;
+		ExpDate: string;
+		Amount: number;
+		VATAmount: number;
+		Description: string | null;
+	}
+	interface IExpenseStaff {
+		StaffOrg: number;
+		StaffIndex: number;
+		OrgName: string | null;
+		StaffName: string | null;
+		BlankStaff: number;
+		BlankAccounts: number;
 	}
 	interface IGLAccount {
 		AccountDesc: string | null;
@@ -40,7 +90,12 @@ declare module PE.Nominal {
 		MapSection: string | null;
 		MapServ: string | null;
 		MapSource: string | null;
-		StaffName: string | null;
+        StaffName: string | null;
+        OrgName: string | null;
+        ServiceName: string | null;
+        OfficeName: string | null;
+        PartnerName: string | null;
+        DepartmentName: string | null;
 	}
 	interface IGLNumEntries {
 		NumEntries: number;
@@ -69,7 +124,21 @@ declare module PE.Nominal {
 	interface IGLType {
 		AccountTypeCode: string | null;
 		AccountTypeDesc: string | null;
-	}
+    }
+    interface IImportMap {
+        DisbCode: string | null;
+        DisbName: string | null;
+        DisbMapIndex: number;
+        NLOrg: number;
+        NLIdx: number;
+        NLAcc: string | null;
+        OrgName: string | null;
+        NumBlank: number;
+    }
+    interface IImportMapUpdate {
+        DisbCode: string | null;
+        DisbMapIndex: number;
+    }
 	interface IJournalExtract extends PE.Nominal.IMapBase {
 		NomBatch: number;
 		NomNarrative: string | null;
@@ -81,6 +150,14 @@ declare module PE.Nominal {
 		IntacctEmployeeID: string | null;
 		IntacctDepartment: string | null;
 		IntacctLocation: string | null;
+		client_partner_id: string | null;
+		category_name_id: string | null;
+		owner_name_id: string | null;
+		service_type_id: string | null;
+		client_partner: string | null;
+		category_name: string | null;
+		owner_name: string | null;
+		service_type: string | null;
 	}
 	interface IJournalGroup {
 		NomOrg: number;
@@ -154,6 +231,26 @@ declare module PE.Nominal {
 		MenuName: string | null;
 		VM: string | null;
 	}
+	interface IMissingExpenseAccountMap {
+		ExpMapIndex: number;
+		ExpOrg: number;
+		PracName: string | null;
+		ChargeCode: string | null;
+		ChargeName: string | null;
+		ChargeExpAccount: string | null;
+		NonChargeExpAccount: string | null;
+        ChargeSuffix1: number | null;
+        ChargeSuffix2: number | null;
+        ChargeSuffix3: number | null;
+        NonChargeSuffix1: number | null;
+        NonChargeSuffix2: number | null;
+        NonChargeSuffix3: number | null;
+	}
+	interface IMissingExpenseStaff {
+		StaffIndex: number;
+		StaffCode: string | null;
+		StaffName: string | null;
+	}
 	interface IMissingMap extends PE.Nominal.IMapBase {
 		NomOrg: number;
 		NomSource: string | null;
@@ -169,6 +266,39 @@ declare module PE.Nominal {
 		PartnerName: string | null;
 		DepartmentName: string | null;
 		NumBlank: number;
+	}
+	interface IMTDClient {
+		ContIndex: number;
+		ClientCode: string | null;
+		ClientName: string | null;
+		ClientStatus: string | null;
+		Address: string | null;
+		TownCity: string | null;
+		County: string | null;
+		Country: string | null;
+		PostCode: string | null;
+	}
+	interface IMTDInvoice {
+		DebtTranIndex: number;
+		DebtTranType: number;
+		ContIndex: number;
+		Address: string | null;
+		DebtTranRefAlpha: string | null;
+		DebtTranRefNum: number;
+		DebtTranDate: string;
+		DueDate: string;
+		DebtTranAmount: number;
+		DebtTranVAT: number;
+		Lines: Array<PE.Nominal.IMTDLineItem>;
+	}
+	interface IMTDLineItem {
+		DebtTranIndex: number;
+		Amount: number;
+		VATCode: string | null;
+		VATAmount: number;
+		Description: string | null;
+		TaxCode: string | null;
+		AccountCode: string | null;
 	}
 	interface INomOrganisation {
 		PracID: number;
@@ -195,7 +325,7 @@ declare module PE.Nominal {
 		PracPeriodEnd: string | null;
 	}
 }
-declare module PE.Nominal.Intacct {
+declare namespace PE.Nominal.Intacct {
 	interface IIntacctCustomer {
 		Org: number;
 		CUSTOMERID: string | null;
@@ -254,5 +384,13 @@ declare module PE.Nominal.Intacct {
 		IntacctCustomerID: string | null;
 		IntacctDepartment: string | null;
 		IntacctLocation: string | null;
+		client_partner_id: string | null;
+		category_name_id: string | null;
+		owner_name_id: string | null;
+		service_type_id: string | null;
+		client_partner: string | null;
+		category_name: string | null;
+		owner_name: string | null;
+		service_type: string | null;
 	}
 }

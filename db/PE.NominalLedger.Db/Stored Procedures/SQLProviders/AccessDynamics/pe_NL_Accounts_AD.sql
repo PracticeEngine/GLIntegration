@@ -26,7 +26,7 @@ IF @Server <> ''
 
 SET @SQL = @SQL + @DB + '.dbo.NL_MAJORHEADING Type ON Mast.NMAJORHEADCODE = Type.NL_MAJORCODE
 WHERE CAST(Mast.NMAJORHEADCODE as nvarchar(10)) = ''' + LTrim(Str(@Type)) + '''
-ORDER BY AccNum'
+ORDER BY AccountCode'
 
 PRINT @SQL
 

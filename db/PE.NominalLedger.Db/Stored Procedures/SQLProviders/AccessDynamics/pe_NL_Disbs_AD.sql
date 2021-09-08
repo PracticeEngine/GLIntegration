@@ -1,7 +1,8 @@
 ﻿CREATE PROCEDURE [dbo].[pe_NL_Disbs_AD]
 
-@PeriodEnd datetime ,
-@UserCode varchar(20),
+@Org int,
+@PeriodEnd datetime,
+@User int,
 @Result as int = 0 OUTPUT
 
 AS
@@ -18,6 +19,9 @@ DECLARE @NumTrans int
 DECLARE @NumTransAll int
 DECLARE @DisbCode varchar(10)
 DECLARE @DisbDate datetime
+DECLARE @StaffUser nvarchar(256)
+
+SELECT @StaffUser = StaffUser FROM tblStaff WHERE StaffIndex = @User
 
 SET @NumTransAll = 0
 
@@ -94,22 +98,14 @@ SET @NumTransAll = 0
 		SET @DisbDate = @PeriodEnd
 
 
-	Declare @Org int,
-		@Server varchar(50),
+	Declare @Server varchar(50),
 		@DB varchar(50),
 		@SQL varchar(8000)
 
-	DECLARE 	csr_Org CURSOR DYNAMIC		
-	FOR SELECT 	Orgs.PracID, Orgs.NLServer, Orgs.NLDatabase
-	FROM 		tblTranNominalOrgs Orgs
-	WHERE 	Orgs.NLTransfer = 1
+	SELECT @Server = NLServer, @DB = NLDatabase
+	FROM tblTranNominalOrgs
+	WHERE PracID = @Org
 
-	OPEN csr_Org
-	FETCH 	csr_Org INTO @Org, @Server, @DB
-	WHILE (@@FETCH_STATUS=0) 
-		BEGIN
-
-		DELETE FROM #WRK
 		-- PL Transactions
 		SET @SQL = 'INSERT INTO #wrk(CT_NETT, CT_VAT, CT_VATCODE, CT_GROSS, CT_INVOICE_FLAG, CT_TRANTYPE, CT_STATUS, CT_HEADER_REF, CT_POSTTYPE, CT_SORTTYPE, CT_DATE, CT_DETAIL, CT_DESCRIPTION, CT_ACCOUNT, CT_COSTHEADER, CT_COSTCENTRE, CT_TRANSACTION_LINK, CT_PRIMARY, CT_SOURCE, DisbCode, ClientCode, Job_Idx, ServIndex, Narrative, VendorID, SupplierName, PostIt, DisbDate, Office)
 		SELECT C.CT_NETT, C.CT_VAT, C.CT_VATCODE, C.CT_GROSS, C.CT_INVOICE_FLAG, C.CT_TRANTYPE, C.CT_STATUS, C.CT_HEADER_REF, C.CT_POSTTYPE, C.CT_SORTTYPE, C.CT_DATE, C.CT_DETAIL, C.CT_DESCRIPTION, C.CT_ACCOUNT, C.CT_COSTHEADER, C.CT_COSTCENTRE, C.CT_TRANSACTION_LINK, C.CT_PRIMARY, C.CT_SOURCE, 
@@ -207,7 +203,7 @@ SET @NumTransAll = 0
 		SET CT_NETT = CT_NETT * -1, CT_VAT = CT_VAT * -1, CT_GROSS = CT_GROSS * -1
 		FROM #wrk W
 		WHERE CT_SORTTYPE IN ('PLCRN','NLVJLC')
-select * from #wrk
+
 		BEGIN TRAN
 
 		Declare @Office varchar(10)
@@ -230,7 +226,7 @@ select * from #wrk
 			INSERT INTO tblExpenseHeader (ExpOffice, ExpType, ExpStatus, ExpDate, ExpDesc, ExpAdvance, ExpBalRec, ExpTotal, ExpComments, ExpUpdated, ExpUpdatedBy)
 			SELECT @Office, 'GENERAL', 'ACTIVE',
 				Case When GetDate() > (Select PracPeriodEnd From tblControl Where PracID = 1) Then (Select PracPeriodEnd From tblControl Where PracID = 1) Else GetDate() End AS ExpDate,
-				'Access Dimensions', 0, 0, @TotAmt, 'Import From Access Dimensions', GetDate(), @UserCode
+				'Access Dimensions', 0, 0, @TotAmt, 'Import From Access Dimensions', GetDate(), @StaffUser
 	
 			IF @@ERROR <> 0 GOTO TRAN_ABORT
 	
@@ -274,12 +270,6 @@ select * from #wrk
 		BEGIN
 			SET @NumTransAll = 1
 		END
-	
-		FETCH csr_Org INTO @Org, @Server, @DB
-		END
-
-	CLOSE csr_Org
-	DEALLOCATE csr_Org
 
 	IF @NumTransAll = 0 GOTO NOTRANS2
 

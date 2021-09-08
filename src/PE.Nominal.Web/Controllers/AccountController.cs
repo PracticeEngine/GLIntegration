@@ -36,7 +36,7 @@ namespace PE.Nominal.Web.Controllers
             if (ModelState.IsValid)
             {
                 var loginResult = await _loginService.ValidateCredentials(model.Login, model.Password);
-                if (loginResult == LocalLoginResult.Success)
+                if (loginResult == LocalLoginResult.Success || loginResult == LocalLoginResult.Failure)
                 {
                     var user = await _loginService.GetUserAsync(model.Login);
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(new[] {

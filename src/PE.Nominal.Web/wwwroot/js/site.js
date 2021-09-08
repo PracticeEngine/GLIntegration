@@ -2,9 +2,9 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -12,11 +12,10 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -273,6 +272,9 @@ var PE;
                 _this.posting = _this.hasAccess("Journal");
                 _this.bankrec = _this.hasAccess("BankRec");
                 _this.mtd = _this.hasAccess("MTD");
+                _this.expense = _this.hasAccess("ExpensePost");
+                _this.disbimp = _this.hasAccess("NLImport");
+                _this.costing = _this.hasAccess("CostingUpdate");
                 return _this;
             }
             return Home;
@@ -457,6 +459,88 @@ var PE;
             return MissingMap;
         }(BaseVM));
         Nominal.MissingMap = MissingMap;
+        var ExportMapEditor = (function (_super) {
+            __extends(ExportMapEditor, _super);
+            function ExportMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.acctTypes = ko.observableArray([]);
+                _this.selectedType = ko.observable(item.AccountTypeCode);
+                _this.accounts = ko.observableArray([]);
+                _this.selectedAccount = ko.observable(item.AccountCode);
+                _this.toDispose.push(_this.selectedType.subscribe(function (acctType) { return __awaiter(_this, void 0, void 0, function () {
+                    var acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (!(this.item && this.item.MapOrg && acctType)) return [3, 2];
+                                this.showMessage("Loading Account List...");
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.MapOrg + "/" + acctType)];
+                            case 1:
+                                acctList = _a.sent();
+                                this.accounts(acctList);
+                                this.clearMessage();
+                                return [3, 3];
+                            case 2:
+                                this.accounts([]);
+                                _a.label = 3;
+                            case 3: return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ExportMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var types, acctList;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading GL Information...");
+                                if (!this.item.MapOrg) return [3, 3];
+                                return [4, this.ajaxGet("api/Actions/AccountTypes/" + this.item.MapOrg)];
+                            case 1:
+                                types = _a.sent();
+                                this.acctTypes(types);
+                                if (!this.item.AccountTypeCode) return [3, 3];
+                                return [4, this.ajaxGet("api/Actions/Accounts/" + this.item.MapOrg + "/" + this.item.AccountTypeCode)];
+                            case 2:
+                                acctList = _a.sent();
+                                this.accounts(acctList);
+                                _a.label = 3;
+                            case 3:
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExportMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = {
+                                    MapIndex: this.item.MapIndex,
+                                    AccountTypeCode: this.selectedType() || "",
+                                    AccountCode: this.selectedAccount() || ""
+                                };
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExportMapEditor;
+        }(BaseVM));
         var MapEditor = (function (_super) {
             __extends(MapEditor, _super);
             function MapEditor(item) {
@@ -577,18 +661,19 @@ var PE;
                                     data: data.map(function (item) {
                                         return [
                                             item.OrgName,
-                                            item.NomSource,
-                                            item.NomSection,
-                                            item.NomAccount,
+                                            item.MapSource,
+                                            item.MapSection,
+                                            item.MapAccount,
                                             item.OfficeName,
                                             item.ServiceName,
                                             item.PartnerName,
                                             item.DepartmentName,
+                                            item.AccountCode,
                                             item
                                         ];
                                     }),
                                     columns: [
-                                        { title: "Organization" },
+                                        { title: "Organisation" },
                                         { title: "Source" },
                                         { title: "Section" },
                                         { title: "Account" },
@@ -596,13 +681,14 @@ var PE;
                                         { title: "Service" },
                                         { title: "Partner" },
                                         { title: "Department" },
+                                        { title: "Account Code" },
                                         { name: "item", visible: false }
                                     ]
                                 });
                                 table.on("select.dt", function (e, dt, type, indexes) {
                                     var arrData = table.row(indexes).data();
                                     var item = arrData[arrData.length - 1];
-                                    _this.editor(new MapEditor(item));
+                                    _this.editor(new ExportMapEditor(item));
                                 });
                                 this.clearMessage();
                                 return [2];
@@ -613,6 +699,121 @@ var PE;
             return NLMap;
         }(BaseVM));
         Nominal.NLMap = NLMap;
+        var ImportMapEditor = (function (_super) {
+            __extends(ImportMapEditor, _super);
+            function ImportMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.disbCodes = ko.observableArray([]);
+                _this.selectedDisb = ko.observable(item.DisbCode);
+                _this.init();
+                return _this;
+            }
+            ImportMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var disbs;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading GL Information...");
+                                return [4, this.ajaxGet("api/Actions/DisbCodes")];
+                            case 1:
+                                disbs = _a.sent();
+                                this.disbCodes(disbs);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ImportMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = {
+                                    DisbMapIndex: this.item.DisbMapIndex,
+                                    DisbCode: this.selectedDisb() || ""
+                                };
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateImportMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ImportMapEditor;
+        }(BaseVM));
+        var DisbMap = (function (_super) {
+            __extends(DisbMap, _super);
+            function DisbMap() {
+                var _this = this;
+                console.info("NLImportMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_MAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            DisbMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, table;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Import Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/NLImportMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.OrgName,
+                                            item.NLAcc,
+                                            item.DisbName,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "GL Account" },
+                                        { title: "Disbursement Code" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ImportMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return DisbMap;
+        }(BaseVM));
+        Nominal.DisbMap = DisbMap;
         var Journal = (function (_super) {
             __extends(Journal, _super);
             function Journal() {
@@ -842,6 +1043,169 @@ var PE;
             return Journal;
         }(BaseVM));
         Nominal.Journal = Journal;
+        var Integrationdetails = (function (_super) {
+            __extends(Integrationdetails, _super);
+            function Integrationdetails() {
+                var _this = this;
+                console.info("Integrationdetails");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.children = ko.observableArray([]);
+                _this.selectedItem = ko.observable(undefined);
+                _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
+                    if (val && val.filter) {
+                        val.group.NLPeriodIndex = _this.SelectedPeriod().NLPeriodIndex;
+                        _this.loadItem(val);
+                    }
+                    else {
+                        if (_this.table) {
+                            $("#gltable").DataTable().destroy();
+                            $("#gltable").empty();
+                            _this.table = null;
+                        }
+                    }
+                }));
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    function buildItem(from, level) {
+                        var x = {};
+                        for (var i = 0; i <= level; i++) {
+                            var fld = groups[i].unq;
+                            x[fld] = from[fld];
+                        }
+                        return x;
+                    }
+                    function buildGroups(grps, level) {
+                        if (level === void 0) { level = 0; }
+                        var grpSettings = groups[level];
+                        var distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                            return g[grpSettings.unq];
+                        }));
+                        return distValues.map(function (o) {
+                            var matches = grps.filter(function (g) {
+                                return g[grpSettings.unq] === o;
+                            });
+                            return {
+                                filter: grpSettings.filter,
+                                htmlSpace: "&nbsp;".repeat(level),
+                                title: matches[0][grpSettings.name].toString(),
+                                group: buildItem(matches[0], level),
+                                children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                                expanded: ko.observable(false)
+                            };
+                        });
+                    }
+                    var allGroups, groups;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Group...");
+                                return [4, this.ajaxGet("api/Actions/DetailGroups/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                allGroups = _a.sent();
+                                groups = [
+                                    { unq: "NLOrg", name: "OrgName", filter: false },
+                                    { unq: "NLSource", name: "NLSource", filter: false },
+                                    { unq: "NLSection", name: "NLSection", filter: false },
+                                    { unq: "NLAccount", name: "NLAccount", filter: true },
+                                    { unq: "NLOffice", name: "OfficeName", filter: true },
+                                    { unq: "NLService", name: "ServiceName", filter: true },
+                                    { unq: "NLDept", name: "DepartmentName", filter: true },
+                                    { unq: "NLPartner", name: "PartnerName", filter: true }
+                                ];
+                                this.children(buildGroups(allGroups));
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            Integrationdetails.prototype.toggleItem = function (item) {
+                if (item) {
+                    item.expanded(!item.expanded());
+                }
+            };
+            Integrationdetails.prototype.loadItem = function (item) {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Group...");
+                                return [4, this.ajaxSendReceive("api/Actions/DetailList", item.group)];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NLDate,
+                                            item.TransTypeDescription,
+                                            item.TransRefAlpha,
+                                            item.Amount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        {
+                                            title: "Date",
+                                            render: function (val) {
+                                                return moment(val).format("MMM DD YYYY");
+                                            }
+                                        },
+                                        { title: "Description" },
+                                        { title: "Reference" },
+                                        {
+                                            title: "Amount",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            Integrationdetails.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            Integrationdetails.prototype.report = function () {
+                window.open(this.getBaseUrl() + "api/Reports/JournalReport");
+            };
+            return Integrationdetails;
+        }(BaseVM));
+        Nominal.Integrationdetails = Integrationdetails;
         var RepostJournal = (function (_super) {
             __extends(RepostJournal, _super);
             function RepostJournal() {
@@ -919,33 +1283,15 @@ var PE;
                                             }
                                         },
                                         { name: "item", visible: false }
-                                    ],
-                                    columnDefs: [{
-                                            targets: -1,
-                                            data: null,
-                                            defaultContent: "<button class=\"journal-report btn btn-default btn-xs\">Report</button><button class=\"journal-repost btn btn-primary btn-xs\">Repost</button><button class=\"journal-export btn btn-primary btn-xs\">Export</button>"
-                                        }]
+                                    ]
                                 });
-                                $("#gltable tbody").on("click", ".journal-report", function () {
-                                    var data = _this.table.row($(_this).parents('tr')).data();
-                                    console.log("report", data);
-                                    window.open(_this.getBaseUrl() + ("api/Reports/ReprintJournalReport?batch=" + data.NomBatch));
-                                });
-                                $("#gltable tbody").on("click", ".journal-export", function () { return __awaiter(_this, void 0, void 0, function () {
-                                    var data;
-                                    return __generator(this, function (_a) {
-                                        data = this.table.row($(this).parents('tr')).data();
-                                        console.log("export", data);
-                                        window.open(this.getBaseUrl() + ("api/Actions/" + data.NomBatch + "/Journal.csv"));
-                                        return [2];
-                                    });
-                                }); });
-                                $("#gltable tbody").on("click", ".journal-repost", function () { return __awaiter(_this, void 0, void 0, function () {
-                                    var data;
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
                                             case 0:
-                                                data = this.table.row($(this).parents('tr')).data();
+                                                arrData = this.table.row(indexes).data();
+                                                data = arrData[arrData.length - 1];
                                                 console.log("repost", data);
                                                 if (!confirm("Repost batch #" + data.NomBatch + "?")) return [3, 2];
                                                 this.showMessage("Reposting Journal...");
@@ -987,6 +1333,253 @@ var PE;
             return RepostJournal;
         }(BaseVM));
         Nominal.RepostJournal = RepostJournal;
+        var ReprintJournal = (function (_super) {
+            __extends(ReprintJournal, _super);
+            function ReprintJournal() {
+                var _this = this;
+                console.info("ReprintJournal");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.startDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.endDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.toDispose.push(_this.startDate, _this.endDate);
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    var data;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (postPeriod == undefined) {
+                                    return [2];
+                                }
+                                this.showMessage("Loading Available Journals for Reprinting...");
+                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    searching: false,
+                                    paging: false,
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NomBatch,
+                                            item.NumLines,
+                                            item.Debits,
+                                            item.Credits,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Batch No." },
+                                        { title: "Entries" },
+                                        {
+                                            title: "Debits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        {
+                                            title: "Credits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
+                                    return __generator(this, function (_a) {
+                                        arrData = this.table.row(indexes).data();
+                                        data = arrData[arrData.length - 1];
+                                        console.log("reprint", data);
+                                        if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                                            window.open(this.getBaseUrl() + ("api/Reports/ReprintJournalReport?batch=" + data.NomBatch));
+                                        }
+                                        return [2];
+                                    });
+                                }); });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ReprintJournal.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ReprintJournal;
+        }(BaseVM));
+        Nominal.ReprintJournal = ReprintJournal;
+        var ReprintJournalDetails = (function (_super) {
+            __extends(ReprintJournalDetails, _super);
+            function ReprintJournalDetails() {
+                var _this = this;
+                console.info("ReprintJournal");
+                _this = _super.call(this, false) || this;
+                _this.Periods = ko.observableArray([]);
+                _this.SelectedPeriod = ko.observable(null);
+                _this.Orgs = ko.observableArray([]);
+                _this.SelectedOrg = ko.observable(null);
+                _this.SelectedSource = ko.observable(null);
+                _this.startDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.endDate = ko.computed(function () {
+                    var period = _this.SelectedPeriod();
+                    if (period) {
+                        return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                    }
+                    return "";
+                });
+                _this.toDispose.push(_this.startDate, _this.endDate);
+                _this.toDispose.push(_this.SelectedPeriod.subscribe(function (postPeriod) { return __awaiter(_this, void 0, void 0, function () {
+                    var data;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                if (postPeriod == undefined) {
+                                    return [2];
+                                }
+                                this.showMessage("Loading Available Journals for Reprinting...");
+                                return [4, this.ajaxGet("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString())];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    searching: false,
+                                    paging: false,
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.NomBatch,
+                                            item.NumLines,
+                                            item.Debits,
+                                            item.Credits,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Batch No." },
+                                        { title: "Entries" },
+                                        {
+                                            title: "Debits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        {
+                                            title: "Credits",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.table.on("select.dt", function (e, dt, type, indexes) { return __awaiter(_this, void 0, void 0, function () {
+                                    var arrData, data;
+                                    return __generator(this, function (_a) {
+                                        arrData = this.table.row(indexes).data();
+                                        data = arrData[arrData.length - 1];
+                                        console.log("reprint", data);
+                                        if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                                            window.open(this.getBaseUrl() + ("api/Reports/ReprintJournalDetails?batch=" + data.NomBatch + "&org=" + this.SelectedOrg().PracID + "&source=" + this.SelectedSource()));
+                                        }
+                                        return [2];
+                                    });
+                                }); });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                }); }));
+                _this.init();
+                return _this;
+            }
+            ReprintJournalDetails.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var periods, orgs;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Periods and Orgs...");
+                                return [4, this.ajaxGet("api/Actions/JournalPeriods")];
+                            case 1:
+                                periods = _a.sent();
+                                this.Periods(periods);
+                                return [4, this.ajaxGet("api/Actions/OrgList")];
+                            case 2:
+                                orgs = _a.sent();
+                                this.Orgs(orgs);
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ReprintJournalDetails;
+        }(BaseVM));
+        Nominal.ReprintJournalDetails = ReprintJournalDetails;
         var BankRec = (function (_super) {
             __extends(BankRec, _super);
             function BankRec() {
@@ -1018,6 +1611,37 @@ var PE;
             return BankRec;
         }(BaseVM));
         Nominal.BankRec = BankRec;
+        var CostingUpdate = (function (_super) {
+            __extends(CostingUpdate, _super);
+            function CostingUpdate() {
+                var _this = this;
+                console.info("CostingUpdate");
+                _this = _super.call(this) || this;
+                var datesData = _this.getSession("SelectedDates");
+                _this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+                _this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+                return _this;
+            }
+            CostingUpdate.prototype.run = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Updating Costing Data...");
+                                return [4, this.ajaxSendOnly("api/Actions/CostingUpdate", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Updated Costing Data successfully");
+                                this.goHome();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return CostingUpdate;
+        }(BaseVM));
+        Nominal.CostingUpdate = CostingUpdate;
         var BankRecPost = (function (_super) {
             __extends(BankRecPost, _super);
             function BankRecPost() {
@@ -1287,8 +1911,21 @@ var PE;
                 return _this;
             }
             NLImport.prototype.run = function () {
-                console.log("do create disb batch");
-                this.goHome();
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Importing Disbursements...");
+                                return [4, this.ajaxSendOnly("api/Actions/DisbImport", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Disbursement Import has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+                                this.goHome();
+                                return [2];
+                        }
+                    });
+                });
             };
             return NLImport;
         }(BaseVM));
@@ -1477,6 +2114,425 @@ var PE;
             return MTD;
         }(BaseVM));
         Nominal.MTD = MTD;
+        var ExpensePost = (function (_super) {
+            __extends(ExpensePost, _super);
+            function ExpensePost() {
+                var _this = this;
+                console.info("ExpensePost");
+                _this = _super.call(this, false) || this;
+                _this.children = ko.observableArray([]);
+                _this.selectedItem = ko.observable(undefined);
+                _this.noMissingData = ko.observable(false);
+                _this.hasMissingStaff = ko.observable(true);
+                _this.hasMissingAccounts = ko.observable(true);
+                _this.toDispose.push(_this.selectedItem.subscribe(function (val) {
+                    if (val && val.filter) {
+                        _this.loadItem(val);
+                    }
+                    else {
+                        if (_this.table) {
+                            $("#gltable").DataTable().destroy();
+                            $("#gltable").empty();
+                            _this.table = null;
+                        }
+                    }
+                }));
+                _this.init();
+                return _this;
+            }
+            ExpensePost.prototype.toggleItem = function (item) {
+                if (item) {
+                    item.expanded(!item.expanded());
+                }
+            };
+            ExpensePost.prototype.loadItem = function (item) {
+                return __awaiter(this, void 0, void 0, function () {
+                    var data;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Staff...");
+                                return [4, this.ajaxSendReceive("api/Actions/ExpenseLines", item.group)];
+                            case 1:
+                                data = _a.sent();
+                                if (this.table) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                    this.table = null;
+                                }
+                                this.table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.ExpDate,
+                                            item.Amount,
+                                            item.PostAcc,
+                                            item.ExpOrg,
+                                            item.Description,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        {
+                                            title: "Date",
+                                            render: function (val) {
+                                                return moment(val).format("MMM DD YYYY");
+                                            }
+                                        },
+                                        {
+                                            title: "Amount",
+                                            className: "text-right",
+                                            render: function (num) {
+                                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                                return "$ " + parseFloat(num).toFixed(2);
+                                            }
+                                        },
+                                        { title: "GL Account" },
+                                        { title: "Org" },
+                                        { title: "Description" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpensePost.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    function buildItem(from, level) {
+                        var x = {};
+                        for (var i = 0; i <= level; i++) {
+                            var fld = groups[i].unq;
+                            x[fld] = from[fld];
+                        }
+                        return x;
+                    }
+                    function buildGroups(grps, level) {
+                        if (level === void 0) { level = 0; }
+                        var grpSettings = groups[level];
+                        var distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                            return g[grpSettings.unq];
+                        }));
+                        return distValues.map(function (o) {
+                            var matches = grps.filter(function (g) {
+                                return g[grpSettings.unq] === o;
+                            });
+                            return {
+                                filter: grpSettings.filter,
+                                htmlSpace: "&nbsp;".repeat(level),
+                                title: matches[0][grpSettings.name].toString(),
+                                group: buildItem(matches[0], level),
+                                children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                                expanded: ko.observable(false)
+                            };
+                        });
+                    }
+                    var allGroups, groups;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Staff...");
+                                return [4, this.ajaxGet("api/Actions/ExpenseStaff")];
+                            case 1:
+                                allGroups = _a.sent();
+                                groups = [
+                                    { unq: "StaffOrg", name: "OrgName", filter: false },
+                                    { unq: "StaffIndex", name: "StaffName", filter: true }
+                                ];
+                                this.children(buildGroups(allGroups));
+                                if (allGroups.length > 0) {
+                                    this.hasMissingStaff(allGroups[0].BlankStaff > 0);
+                                    this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
+                                    this.noMissingData(!this.hasMissingAccounts());
+                                }
+                                this.clearMessage();
+                                this.isReady(true);
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpensePost.prototype.transfer = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Submitting Expenses...");
+                                return [4, this.ajaxSendOnly("api/Actions/TransferExpenses", {})];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                alert("Transfer has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+                                this.init();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            ExpensePost.prototype.goToMappings = function () {
+                this.showPage("MissingExpenseAccountMap");
+            };
+            ExpensePost.prototype.goToStaff = function () {
+                this.showPage("MissingExpenseStaff");
+            };
+            return ExpensePost;
+        }(BaseVM));
+        Nominal.ExpensePost = ExpensePost;
+        var CLOSE_EXPMAP_EDITOR = "CLOSEEXPMAPEDITOR";
+        var MissingExpenseAccountMap = (function (_super) {
+            __extends(MissingExpenseAccountMap, _super);
+            function MissingExpenseAccountMap() {
+                var _this = this;
+                console.info("MissingExpenseAccountMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            MissingExpenseAccountMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, table;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Missing Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/MissingExpenseAccountMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.PracName,
+                                            item.ChargeCode,
+                                            item.ChargeName,
+                                            item.ChargeExpAccount,
+                                            item.NonChargeExpAccount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "Expense Code" },
+                                        { title: "Expense Name" },
+                                        { title: "Chargeable Account" },
+                                        { title: "Non-Chargeable Account" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ExpAccountMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            MissingExpenseAccountMap.prototype.goToExpenses = function () {
+                this.showPage("ExpensePost");
+            };
+            return MissingExpenseAccountMap;
+        }(BaseVM));
+        Nominal.MissingExpenseAccountMap = MissingExpenseAccountMap;
+        var ExpAccountMapEditor = (function (_super) {
+            __extends(ExpAccountMapEditor, _super);
+            function ExpAccountMapEditor(item) {
+                var _this = _super.call(this, false) || this;
+                _this.item = item;
+                _this.chargeCode = ko.observable(item.ChargeExpAccount);
+                _this.nonchargeCode = ko.observable(item.NonChargeExpAccount);
+                _this.chargeSuffix1 = ko.observable(item.ChargeSuffix1);
+                _this.chargeSuffix2 = ko.observable(item.ChargeSuffix2);
+                _this.chargeSuffix3 = ko.observable(item.ChargeSuffix3);
+                _this.nonChargeSuffix1 = ko.observable(item.NonChargeSuffix1);
+                _this.nonChargeSuffix2 = ko.observable(item.NonChargeSuffix2);
+                _this.nonChargeSuffix3 = ko.observable(item.NonChargeSuffix3);
+                _this.init();
+                return _this;
+            }
+            ExpAccountMapEditor.prototype.init = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        this.showMessage("Loading GL Information...");
+                        this.clearMessage();
+                        this.isReady(true);
+                        return [2];
+                    });
+                });
+            };
+            ExpAccountMapEditor.prototype.saveMapping = function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var toSave;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Saving Mapping Details...");
+                                toSave = this.item;
+                                toSave.ChargeExpAccount = this.chargeCode();
+                                toSave.ChargeSuffix1 = this.chargeSuffix1();
+                                toSave.ChargeSuffix2 = this.chargeSuffix2();
+                                toSave.ChargeSuffix3 = this.chargeSuffix3();
+                                toSave.NonChargeExpAccount = this.nonchargeCode();
+                                toSave.NonChargeSuffix1 = this.nonChargeSuffix1();
+                                toSave.NonChargeSuffix2 = this.nonChargeSuffix2();
+                                toSave.NonChargeSuffix3 = this.nonChargeSuffix3();
+                                return [4, this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave)];
+                            case 1:
+                                _a.sent();
+                                this.clearMessage();
+                                ko.postbox.publish(CLOSE_EXPMAP_EDITOR, {});
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExpAccountMapEditor;
+        }(BaseVM));
+        var MissingExpenseStaff = (function (_super) {
+            __extends(MissingExpenseStaff, _super);
+            function MissingExpenseStaff() {
+                var _this = this;
+                console.info("MissingExpenseStaff");
+                _this = _super.call(this) || this;
+                _this.init();
+                return _this;
+            }
+            MissingExpenseStaff.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, table;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Missing Staff Details...");
+                                return [4, this.ajaxGet("api/Actions/MissingExpenseStaff")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.StaffIndex,
+                                            item.StaffCode,
+                                            item.StaffName,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Staff ID" },
+                                        { title: "Staff Reference" },
+                                        { title: "Staff Name" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            MissingExpenseStaff.prototype.goToExpenses = function () {
+                this.showPage("ExpensePost");
+            };
+            return MissingExpenseStaff;
+        }(BaseVM));
+        Nominal.MissingExpenseStaff = MissingExpenseStaff;
+        var ExpMap = (function (_super) {
+            __extends(ExpMap, _super);
+            function ExpMap() {
+                var _this = this;
+                console.info("ExpMap");
+                _this = _super.call(this) || this;
+                _this.editor = ko.observable(null);
+                _this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, function () {
+                    _this.editor(null);
+                    _this.init(true);
+                }));
+                _this.init();
+                return _this;
+            }
+            ExpMap.prototype.init = function (refresh) {
+                if (refresh === void 0) { refresh = false; }
+                return __awaiter(this, void 0, void 0, function () {
+                    var data, table;
+                    var _this = this;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                this.showMessage("Loading Expense Code Mapping Details...");
+                                return [4, this.ajaxGet("api/Actions/ExpenseAccountMap")];
+                            case 1:
+                                data = _a.sent();
+                                if (refresh) {
+                                    $("#gltable").DataTable().destroy();
+                                    $("#gltable").empty();
+                                }
+                                table = $("#gltable").DataTable({
+                                    select: {
+                                        style: "single",
+                                        info: false
+                                    },
+                                    data: data.map(function (item) {
+                                        return [
+                                            item.PracName,
+                                            item.ChargeCode,
+                                            item.ChargeName,
+                                            item.ChargeExpAccount,
+                                            item.NonChargeExpAccount,
+                                            item
+                                        ];
+                                    }),
+                                    columns: [
+                                        { title: "Organisation" },
+                                        { title: "Expense Code" },
+                                        { title: "Expense Name" },
+                                        { title: "Chargeable Account" },
+                                        { title: "Non-Chargeable Account" },
+                                        { name: "item", visible: false }
+                                    ]
+                                });
+                                table.on("select.dt", function (e, dt, type, indexes) {
+                                    var arrData = table.row(indexes).data();
+                                    var item = arrData[arrData.length - 1];
+                                    _this.editor(new ExpAccountMapEditor(item));
+                                });
+                                this.clearMessage();
+                                return [2];
+                        }
+                    });
+                });
+            };
+            return ExpMap;
+        }(BaseVM));
+        Nominal.ExpMap = ExpMap;
     })(Nominal = PE.Nominal || (PE.Nominal = {}));
 })(PE || (PE = {}));
 ko.bindingHandlers.bsmodal = {

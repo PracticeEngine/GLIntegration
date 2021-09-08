@@ -134,5 +134,15 @@ namespace PE.Nominal.Fake
         {
             throw new NotImplementedException();
         }
+
+        public Task PostExpenseCmd(int Org, IEnumerable<ExpenseExtract> lines, PerformContext performContext)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ImportDisbursementsCmd(int Org, PerformContext performContext, int StaffId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

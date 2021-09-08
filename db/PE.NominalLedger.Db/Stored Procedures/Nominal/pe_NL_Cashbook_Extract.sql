@@ -1,6 +1,10 @@
 ﻿CREATE PROCEDURE [dbo].[pe_NL_Cashbook_Extract]
-	@NomOrg int,
-	@BatchID int = 0
+
+@NomOrg int,
+@BatchID int = 0,
+@Journal nvarchar(10) = null,
+@HangfireJobID nvarchar(255)
+
 AS
 
 	DECLARE @Batch int

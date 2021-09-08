@@ -4,13 +4,22 @@
 
 AS
 
-INSERT INTO tblTranNominalPostExpenses(PeriodIndex, ExpDate, ExpOrg, VendorIndex, VendorCode, DisbCode, Amount, VATAmount, PostAcc, Description, AllocIndex, Posted)
-SELECT @Period, N.ExpDate,  CASE WHEN H.ExpType = 'OWN' THEN S.StaffOrganisation ELSE 0 END, CASE WHEN H.ExpType = 'OWN' THEN H.ExpStaff ELSE 0 END, CASE WHEN H.ExpType = 'OWN' THEN S.StaffCode ELSE '' END, A.DisbCode, 
-		A.ChargeAmount, A.ChargeVAT, CASE WHEN A.ClientIndex < 900000 THEN TCC.ChargeNominalWIP ELSE TCC.ChargeNominalWoff END, A.Description, A.AllocIndex, 0
+INSERT INTO tblTranNominalExpMap(ExpOrg, DisbCode)
+SELECT S.StaffOrganisation, A.DisbCode
 FROM tblTranNominalExpense N
 INNER JOIN tblExpenseHeader H ON N.ExpIndex = H.ExpIndex
 INNER JOIN tblExpenseAllocation A ON N.ExpIndex = A.ExpIndex
-INNER JOIN tblTimeChargeCode TCC ON A.DisbCode = TCC.ChargeCode AND TCC.ChargeClass = 'DISB'
+INNER JOIN tblStaff S ON H.ExpStaff = S.StaffIndex
+LEFT JOIN tblTranNominalExpMap M ON S.StaffOrganisation = M.ExpOrg AND A.DisbCode = M.DisbCode
+WHERE N.ExpPosted = 0 AND M.ExpMapIndex IS NULL
+GROUP BY S.StaffOrganisation, A.DisbCode
+
+INSERT INTO tblTranNominalPostExpenses(PeriodIndex, ExpDate, ExpOrg, VendorIndex, VendorCode, DisbCode, Chargeable, Amount, VATAmount, PostAcc, Description, AllocIndex, Posted)
+SELECT @Period, N.ExpDate, N.ExpPrac, S.StaffIndex, '', A.DisbCode, CASE WHEN A.ClientIndex < 900000 THEN 1 ELSE 0 END, A.ChargeAmount, A.ChargeVAT, 
+		'', A.[Description], A.AllocIndex, 0
+FROM tblTranNominalExpense N
+INNER JOIN tblExpenseHeader H ON N.ExpIndex = H.ExpIndex
+INNER JOIN tblExpenseAllocation A ON N.ExpIndex = A.ExpIndex
 LEFT JOIN tblExpenseReceipt R ON A.ReceiptIndex = R.ReceiptIndex
 LEFT JOIN tblStaff S ON H.ExpStaff = S.StaffIndex
-WHERE N.ExpPosted = 0
+WHERE N.ExpPosted = 0 AND N.ExpPeriod = @Period

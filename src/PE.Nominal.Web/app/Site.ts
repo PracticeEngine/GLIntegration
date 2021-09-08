@@ -1,5 +1,5 @@
 ﻿namespace PE.Nominal {
-
+ 
     /** Standard Enum Pub/Sub Topics */
     enum KOTOPIC {
         PAGE
@@ -262,6 +262,9 @@
         posting: boolean;
         bankrec: boolean;
         mtd: boolean;
+        expense: boolean;
+        disbimp: boolean;
+        costing: boolean;
         constructor() {
             console.info("Home");
             super();
@@ -271,8 +274,10 @@
             this.posting = this.hasAccess("Journal");
             this.bankrec = this.hasAccess("BankRec");
             this.mtd = this.hasAccess("MTD");
+            this.expense = this.hasAccess("ExpensePost");
+            this.disbimp = this.hasAccess("NLImport");
+            this.costing = this.hasAccess("CostingUpdate");
         }
-
     }
 
     /**
@@ -420,6 +425,63 @@
     }
 
     /**
+     * Class for Editing an Export Account Mapping 
+     */
+    class ExportMapEditor extends BaseVM {
+        item: PE.Nominal.IGLMapping;
+        acctTypes: KnockoutObservableArray<PE.Nominal.IGLType>;
+        selectedType: KnockoutObservable<string>;
+        accounts: KnockoutObservableArray<PE.Nominal.IGLAccount>;
+        selectedAccount: KnockoutObservable<string>;
+        constructor(item: PE.Nominal.IGLMapping) {
+            super(false);
+            this.item = item;
+            this.acctTypes = ko.observableArray([]);
+            this.selectedType = ko.observable(item.AccountTypeCode);
+            this.accounts = ko.observableArray([]);
+            this.selectedAccount = ko.observable(item.AccountCode);
+            this.toDispose.push(this.selectedType.subscribe(async (acctType) => {
+                if (this.item && this.item.MapOrg && acctType) {
+                    this.showMessage("Loading Account List...");
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.MapOrg + "/" + acctType);
+                    this.accounts(acctList);
+                    this.clearMessage();
+                } else {
+                    this.accounts([]);
+                }
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            if (this.item.MapOrg) {
+                let types = await this.ajaxGet<PE.Nominal.IGLType[]>("api/Actions/AccountTypes/" + this.item.MapOrg);
+                this.acctTypes(types);
+                if (this.item.AccountTypeCode) {
+                    let acctList = await this.ajaxGet<PE.Nominal.IGLAccount[]>("api/Actions/Accounts/" + this.item.MapOrg + "/" + this.item.AccountTypeCode);
+                    this.accounts(acctList);
+                }
+            }
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IMapUpdate = {
+                MapIndex: this.item.MapIndex,
+                AccountTypeCode: this.selectedType() || "",
+                AccountCode: this.selectedAccount() || ""
+            };
+            await this.ajaxSendOnly("api/Actions/UpdateMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+        }
+    }
+
+
+    /**
      * Class for Editing a Mapping (Missing or Journal)
      */
     class MapEditor extends BaseVM {
@@ -479,7 +541,7 @@
      * Export Account Mappings VM
      */
     export class NLMap extends BaseVM {
-        editor: KnockoutObservable<MapEditor>;
+        editor: KnockoutObservable<ExportMapEditor>;
         constructor() {
             console.info("NLMap");
             super();
@@ -495,7 +557,7 @@
 
         async init(refresh: boolean = false): Promise<void> {
             this.showMessage("Loading Export Mapping Details...");
-            let data = await this.ajaxGet<PE.Nominal.IMissingMap[]>("api/Actions/NLMap");
+            let data = await this.ajaxGet<PE.Nominal.IGLMapping[]>("api/Actions/NLMap");
             if (refresh) {
                 // Wipe out existing
                 $("#gltable").DataTable().destroy();
@@ -509,18 +571,19 @@
                 data: data.map(function (item) {
                     return [
                         item.OrgName,
-                        item.NomSource,
-                        item.NomSection,
-                        item.NomAccount,
+                        item.MapSource,
+                        item.MapSection,
+                        item.MapAccount,
                         item.OfficeName,
                         item.ServiceName,
                         item.PartnerName,
                         item.DepartmentName,
+                        item.AccountCode,
                         item
                     ];
                 }),
                 columns: [
-                    { title: "Organization" },
+                    { title: "Organisation" },
                     { title: "Source" },
                     { title: "Section" },
                     { title: "Account" },
@@ -528,6 +591,7 @@
                     { title: "Service" },
                     { title: "Partner" },
                     { title: "Department" },
+                    {title: "Account Code" },
                     { name: "item", visible: false }
                 ]
             });
@@ -535,7 +599,7 @@
                 // On Row Select
                 let arrData = <Array<any>>table.row(indexes).data();
                 let item = arrData[arrData.length - 1];
-                this.editor(new MapEditor(item));
+                this.editor(new ExportMapEditor(item));
             });
             this.clearMessage();
         }
@@ -548,6 +612,107 @@
         filter: boolean;
         htmlSpace: string;
         expanded: KnockoutObservable<boolean>;
+    }
+
+    interface DetailNode {
+        group: Partial<PE.Nominal.IDetailGroup>;
+        title: string;
+        children: GroupNode[];
+        filter: boolean;
+        htmlSpace: string;
+        expanded: KnockoutObservable<boolean>;
+    }
+
+
+    /**
+     * Class for Editing an Import Mapping
+     */
+    class ImportMapEditor extends BaseVM {
+        item: PE.Nominal.IImportMap;
+        disbCodes: KnockoutObservableArray<PE.Nominal.IDisbCode>;
+        selectedDisb: KnockoutObservable<string>;
+        constructor(item: PE.Nominal.IImportMap) {
+            super(false);
+            this.item = item;
+            this.disbCodes = ko.observableArray([]);
+            this.selectedDisb = ko.observable(item.DisbCode);
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            let disbs = await this.ajaxGet<PE.Nominal.IDisbCode[]>("api/Actions/DisbCodes");
+            this.disbCodes(disbs);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IImportMapUpdate = {
+                DisbMapIndex: this.item.DisbMapIndex,
+                DisbCode: this.selectedDisb() || ""
+            };
+            await this.ajaxSendOnly("api/Actions/UpdateImportMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_MAP_EDITOR, {});
+        }
+    }
+
+    /**
+     * Import Account Mappings VM
+     */
+    export class DisbMap extends BaseVM {
+        editor: KnockoutObservable<ImportMapEditor>;
+        constructor() {
+            console.info("NLImportMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_MAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Import Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IImportMap[]>("api/Actions/NLImportMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.OrgName,
+                        item.NLAcc,
+                        item.DisbName,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "GL Account" },
+                    { title: "Disbursement Code" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ImportMapEditor(item));
+            });
+            this.clearMessage();
+        }
     }
 
     /**
@@ -750,6 +915,157 @@
     }
 
     /**
+     * Integration Details VM
+     */
+    export class Integrationdetails extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        children: KnockoutObservableArray<DetailNode>;
+        selectedItem: KnockoutObservable<DetailNode>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("Integrationdetails");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.children = ko.observableArray([]);
+            this.selectedItem = ko.observable(undefined);
+            this.toDispose.push(this.selectedItem.subscribe((val) => {
+                if (val && val.filter) {
+                    val.group.NLPeriodIndex = this.SelectedPeriod().NLPeriodIndex;
+                    this.loadItem(val);
+                } else {
+                    // Wipe out existing
+                    if (this.table) {
+                        // Wipe out existing
+                        $("#gltable").DataTable().destroy();
+                        $("#gltable").empty();
+                        this.table = null;
+                    }
+                }
+            }));
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                this.showMessage("Loading Group...");
+                let allGroups = await this.ajaxGet<PE.Nominal.IDetailGroup[]>("api/Actions/DetailGroups/" + postPeriod.NLPeriodIndex.toString());
+
+                // Group by Org, Source, Section, [Account, Office, Service, Department, Partner] (selectable items in [])
+                let groups: Array<{ unq: keyof PE.Nominal.IDetailGroup, name: keyof PE.Nominal.IDetailGroup, filter: boolean }> = [
+                    { unq: "NLOrg", name: "OrgName", filter: false },
+                    { unq: "NLSource", name: "NLSource", filter: false },
+                    { unq: "NLSection", name: "NLSection", filter: false },
+                    { unq: "NLAccount", name: "NLAccount", filter: true },
+                    { unq: "NLOffice", name: "OfficeName", filter: true },
+                    { unq: "NLService", name: "ServiceName", filter: true },
+                    { unq: "NLDept", name: "DepartmentName", filter: true },
+                    { unq: "NLPartner", name: "PartnerName", filter: true }
+                ];
+
+                // function to build partial item based on level
+                function buildItem(from: PE.Nominal.IDetailGroup, level: number): Partial<PE.Nominal.IDetailGroup> {
+                    let x = {};
+                    for (let i = 0; i <= level; i++) {
+                        let fld = groups[i].unq;
+                        x[fld] = from[fld];
+                    }
+                    return x;
+                }
+
+
+                // function to recursively build groups
+                function buildGroups(grps: PE.Nominal.IDetailGroup[], level: number = 0): DetailNode[] {
+                    let grpSettings = groups[level];
+                    let distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                        return g[grpSettings.unq];
+                    }));
+                    return distValues.map(function (o) {
+                        let matches = grps.filter(function (g) {
+                            return g[grpSettings.unq] === o;
+                        });
+                        return {
+                            filter: grpSettings.filter,
+                            htmlSpace: "&nbsp;".repeat(level),
+                            title: matches[0][grpSettings.name].toString(),
+                            group: buildItem(matches[0], level),
+                            children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                            expanded: ko.observable(false)
+                        };
+                    });
+                }
+                // Call buildGroups to construct the nexted groups 
+                this.children(buildGroups(allGroups));
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        toggleItem(item: DetailNode): void {
+            if (item) {
+                item.expanded(!item.expanded());
+            }
+        }
+
+        async loadItem(item: DetailNode): Promise<void> {
+            this.showMessage("Loading Group...");
+            let data = await this.ajaxSendReceive<PE.Nominal.IDetailLine[], Partial<PE.Nominal.IDetailGroup>>("api/Actions/DetailList", item.group);
+            if (this.table) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+                this.table = null;
+            }
+
+            this.table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.NLDate,
+                        item.TransTypeDescription,
+                        item.TransRefAlpha,
+                        item.Amount,
+                        item
+                    ];
+                }),
+                columns: [
+                    {
+                        title: "Date",
+                        render: function (val) {
+                            return moment(val).format("MMM DD YYYY");
+                        }
+                    },
+                    { title: "Description" },
+                    { title: "Reference" },
+                    {
+                        title: "Amount",
+                        className: "text-right",
+                        render: function (num) {
+                            num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                            return "$ " + parseFloat(num).toFixed(2);
+                        }
+                    },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+
+        }
+
+        report(): void {
+            window.open(this.getBaseUrl() + "api/Reports/JournalReport");
+        }
+    }
+
+    /**
      * Journal RePosting VM
      */
     export class RepostJournal extends BaseVM {
@@ -825,33 +1141,12 @@
                             }
                         },
                         { name: "item", visible: false }
-                    ],
-                    columnDefs: [{
-                        targets: -1,
-                        data: null,
-                        defaultContent: `<button class="journal-report btn btn-default btn-xs">Report</button><button class="journal-repost btn btn-primary btn-xs">Repost</button><button class="journal-export btn btn-primary btn-xs">Export</button>`
-                    }]
+                    ]
                 });
-                //.on("select.dt", async (e: JQueryEventObject, dt: any, type: string, indexes: Array<any>) => {
-                //    // On Row Select
-                //    let arrData = <Array<any>>this.table.row(indexes).data();
-                //    let item = arrData[arrData.length - 1];
-                //    if (confirm("Repost batch #" + item.NomBatch + "?")) {
-                //        await this.ajaxSendOnly("api/Actions/RepostJournal/" + item.NomBatch.toString(), {});
-                //    }
-                //});
-                $("#gltable tbody").on("click", ".journal-report", () => {
-                    var data = <PE.Nominal.IJournalRepostBatch> this.table.row($(this).parents('tr')).data();
-                    console.log("report", data);
-                    window.open(this.getBaseUrl() + `api/Reports/ReprintJournalReport?batch=${data.NomBatch}`);
-                });
-                $("#gltable tbody").on("click", ".journal-export", async () => {
-                    var data = <PE.Nominal.IJournalRepostBatch>this.table.row($(this).parents('tr')).data();
-                    console.log("export", data);
-                    window.open(this.getBaseUrl() + `api/Actions/${data.NomBatch}/Journal.csv`);
-                });
-                $("#gltable tbody").on("click", ".journal-repost", async () => {
-                    var data = <PE.Nominal.IJournalRepostBatch> this.table.row($(this).parents('tr')).data();
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
                     console.log("repost", data);
                     if (confirm("Repost batch #" + data.NomBatch + "?")) {
                         this.showMessage("Reposting Journal...");
@@ -868,6 +1163,222 @@
             this.showMessage("Loading Periods...");
             let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
             this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+    }
+
+    /**
+     * Journal RePrinting VM
+     */
+    export class ReprintJournal extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        startDate: KnockoutComputed<string>;
+        endDate: KnockoutComputed<string>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ReprintJournal");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.startDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.endDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.toDispose.push(this.startDate, this.endDate);
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                if (postPeriod == undefined) {
+                    return;
+                }
+                this.showMessage("Loading Available Journals for Reprinting...");
+                let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
+                if (this.table) {
+                    // Wipe out existing
+                    $("#gltable").DataTable().destroy();
+                    $("#gltable").empty();
+                    this.table = null;
+                }
+
+                this.table = $("#gltable").DataTable({
+                    select: {
+                        style: "single",
+                        info: false
+                    },
+                    searching: false,
+                    paging: false,
+                    data: data.map(function (item) {
+                        return [
+                            item.NomBatch,
+                            item.NumLines,
+                            item.Debits,
+                            item.Credits,
+                            item
+                        ];
+                    }),
+                    columns: [
+                        { title: "Batch No." },
+                        { title: "Entries" },
+                        {
+                            title: "Debits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        {
+                            title: "Credits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        { name: "item", visible: false }
+                    ]
+                });
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
+                    console.log("reprint", data);
+                    if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                        window.open(this.getBaseUrl() + `api/Reports/ReprintJournalReport?batch=${data.NomBatch}`);
+                    }
+                });
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+    }
+
+    /**
+     * Journal RePrinting Details VM
+     */
+    export class ReprintJournalDetails extends BaseVM {
+        Periods: KnockoutObservableArray<PE.Nominal.IPostPeriods>;
+        SelectedPeriod: KnockoutObservable<PE.Nominal.IPostPeriods>;
+        Orgs: KnockoutObservableArray<PE.Nominal.INomOrganisation>;
+        SelectedOrg: KnockoutObservable<PE.Nominal.INomOrganisation>;
+        SelectedSource: KnockoutObservable<string>;
+        startDate: KnockoutComputed<string>;
+        endDate: KnockoutComputed<string>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ReprintJournal");
+            super(false);
+            this.Periods = ko.observableArray([]);
+            this.SelectedPeriod = ko.observable(null);
+            this.Orgs = ko.observableArray([]);
+            this.SelectedOrg = ko.observable(null);
+            this.SelectedSource = ko.observable(null);
+            this.startDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodStartDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.endDate = ko.computed(() => {
+                let period = this.SelectedPeriod();
+                if (period) {
+                    return moment(period.PeriodEndDate).format("ddd MMM DD YYYY");
+                }
+                return "";
+            });
+            this.toDispose.push(this.startDate, this.endDate);
+            this.toDispose.push(this.SelectedPeriod.subscribe(async (postPeriod) => {
+                if (postPeriod == undefined) {
+                    return;
+                }
+                this.showMessage("Loading Available Journals for Reprinting...");
+                let data = await this.ajaxGet<PE.Nominal.IJournalRepostBatch[]>("api/Actions/JournalRepostList/" + postPeriod.NLPeriodIndex.toString());
+                if (this.table) {
+                    // Wipe out existing
+                    $("#gltable").DataTable().destroy();
+                    $("#gltable").empty();
+                    this.table = null;
+                }
+
+                this.table = $("#gltable").DataTable({
+                    select: {
+                        style: "single",
+                        info: false
+                    },
+                    searching: false,
+                    paging: false,
+                    data: data.map(function (item) {
+                        return [
+                            item.NomBatch,
+                            item.NumLines,
+                            item.Debits,
+                            item.Credits,
+                            item
+                        ];
+                    }),
+                    columns: [
+                        { title: "Batch No." },
+                        { title: "Entries" },
+                        {
+                            title: "Debits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        {
+                            title: "Credits",
+                            className: "text-right",
+                            render: function (num) {
+                                num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                                return "$ " + parseFloat(num).toFixed(2);
+                            }
+                        },
+                        { name: "item", visible: false }
+                    ]
+                });
+                (<DataTables.SelectApi><any>this.table).on("select.dt", async (e, dt, type, indexes) => {
+                    // On Row Select
+                    let arrData = <Array<any>>this.table.row(indexes).data();
+                    let data = arrData[arrData.length - 1];
+                    console.log("reprint", data);
+                    if (confirm("Reprint batch #" + data.NomBatch + "?")) {
+                        window.open(this.getBaseUrl() + `api/Reports/ReprintJournalDetails?batch=${data.NomBatch}&org=${this.SelectedOrg().PracID}&source=${this.SelectedSource()}`);
+                    }
+                });
+                this.clearMessage();
+            }));
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Periods and Orgs...");
+            let periods = await this.ajaxGet<PE.Nominal.IPostPeriods[]>("api/Actions/JournalPeriods");
+            this.Periods(periods);
+            let orgs = await this.ajaxGet<PE.Nominal.INomOrganisation[]>("api/Actions/OrgList");
+            this.Orgs(orgs);
             this.clearMessage();
             this.isReady(true);
         }
@@ -897,6 +1408,28 @@
         }
     }
 
+    /**
+     * Update Costing VM
+     */
+    export class CostingUpdate extends BaseVM {
+        startDate: string;
+        endDate: string;
+        constructor() {
+            console.info("CostingUpdate");
+            super();
+            let datesData = this.getSession<PE.Nominal.ISelectedDates>("SelectedDates");
+            this.startDate = moment(datesData.PracPeriodStart.substr(0, 10)).format("ddd MMM DD YYYY");
+            this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
+        }
+
+        async run(): Promise<void> {
+            this.showMessage("Updating Costing Data...");
+            await this.ajaxSendOnly("api/Actions/CostingUpdate", {});
+            this.clearMessage();
+            alert("Updated Costing Data successfully");
+            this.goHome();
+        }
+    }
     /**
      * BankRec RePosting VM
      */
@@ -1129,8 +1662,11 @@
             this.endDate = moment(datesData.PracPeriodEnd.substr(0, 10)).format("ddd MMM DD YYYY");
         }
 
-        run(): void {
-            console.log("do create disb batch");
+        async run(): Promise<void> {
+            this.showMessage("Importing Disbursements...");
+            await this.ajaxSendOnly("api/Actions/DisbImport", {});
+            this.clearMessage();
+            alert("Disbursement Import has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.goHome();
         }
     }
@@ -1251,6 +1787,385 @@
             this.clearMessage();
             alert("Making Tax Digital Sync has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
             this.goHome();
+        }
+    }
+
+
+    /**
+     * Expense Posting VM
+     */
+    export class ExpensePost extends BaseVM {
+        children: KnockoutObservableArray<GroupNode>;
+        selectedItem: KnockoutObservable<GroupNode>;
+        noMissingData: KnockoutObservable<boolean>;
+        hasMissingStaff: KnockoutObservable<boolean>;
+        hasMissingAccounts: KnockoutObservable<boolean>;
+        table: DataTables.Api;
+        constructor() {
+            console.info("ExpensePost");
+            super(false);
+            this.children = ko.observableArray([]);
+            this.selectedItem = ko.observable(undefined);
+            this.noMissingData = ko.observable(false);
+            this.hasMissingStaff = ko.observable(true);
+            this.hasMissingAccounts = ko.observable(true);
+            this.toDispose.push(this.selectedItem.subscribe((val) => {
+                if (val && val.filter) {
+                    this.loadItem(val);
+                } else {
+                    // Wipe out existing
+                    if (this.table) {
+                        // Wipe out existing
+                        $("#gltable").DataTable().destroy();
+                        $("#gltable").empty();
+                        this.table = null;
+                    }
+                }
+            }));
+            this.init();
+        }
+
+        toggleItem(item: GroupNode): void {
+            if (item) {
+                item.expanded(!item.expanded());
+            }
+        }
+
+        async loadItem(item: GroupNode): Promise<void> {
+            this.showMessage("Loading Staff...");
+            let data = await this.ajaxSendReceive<PE.Nominal.IExpenseLines[], Partial<PE.Nominal.IExpenseStaff>>("api/Actions/ExpenseLines", item.group);
+            if (this.table) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+                this.table = null;
+            }
+
+            this.table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.ExpDate,
+                        item.Amount,
+                        item.PostAcc,
+                        item.ExpOrg,
+                        item.Description,
+                        item
+                    ];
+                }),
+                columns: [
+                    {
+                        title: "Date",
+                        render: function (val) {
+                            return moment(val).format("MMM DD YYYY");
+                        }
+                    },
+                    {
+                        title: "Amount",
+                        className: "text-right",
+                        render: function (num) {
+                            num = isNaN(num) || num === '' || num === null ? 0.00 : num;
+                            return "$ " + parseFloat(num).toFixed(2);
+                        }
+                    },
+                    { title: "GL Account" },
+                    { title: "Org" },
+                    { title: "Description" },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+
+        async init(): Promise<void> {
+            this.showMessage("Loading Staff...");
+            let allGroups = await this.ajaxGet<PE.Nominal.IExpenseStaff[]>("api/Actions/ExpenseStaff");
+
+            // Group by Org, Staff] (selectable items in [])
+            let groups: Array<{ unq: keyof PE.Nominal.IExpenseStaff, name: keyof PE.Nominal.IExpenseStaff, filter: boolean }> = [
+                { unq: "StaffOrg", name: "OrgName", filter: false },
+                { unq: "StaffIndex", name: "StaffName", filter: true }
+            ];
+
+            // function to build partial item based on level
+            function buildItem(from: PE.Nominal.IExpenseStaff, level: number): Partial<PE.Nominal.IExpenseStaff> {
+                let x = {};
+                for (let i = 0; i <= level; i++) {
+                    let fld = groups[i].unq;
+                    x[fld] = from[fld];
+                }
+                return x;
+            }
+
+
+            // function to recursively build groups
+            function buildGroups(grps: PE.Nominal.IExpenseStaff[], level: number = 0): GroupNode[] {
+                let grpSettings = groups[level];
+                let distValues = ko.utils.arrayGetDistinctValues(grps.map(function (g) {
+                    return g[grpSettings.unq];
+                }));
+                return distValues.map(function (o) {
+                    let matches = grps.filter(function (g) {
+                        return g[grpSettings.unq] === o;
+                    });
+                    return {
+                        filter: grpSettings.filter,
+                        htmlSpace: "&nbsp;".repeat(level),
+                        title: matches[0][grpSettings.name].toString(),
+                        group: buildItem(matches[0], level),
+                        children: (level + 1 < groups.length) ? buildGroups(matches, level + 1) : [],
+                        expanded: ko.observable(false)
+                    };
+                });
+            }
+            // Call buildGroups to construct the nexted groups 
+            this.children(buildGroups(allGroups));
+            if (allGroups.length > 0) {
+                this.hasMissingStaff(allGroups[0].BlankStaff > 0);
+                this.hasMissingAccounts(allGroups[0].BlankAccounts > 0);
+                this.noMissingData(!this.hasMissingAccounts());
+            }
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async transfer(): Promise<void> {
+            this.showMessage("Submitting Expenses...");
+            await this.ajaxSendOnly("api/Actions/TransferExpenses", {});
+            this.clearMessage();
+            alert("Transfer has been queued.\nPlease check the Hangfire Dashboard for details and logging.");
+            this.init();
+        }
+
+        goToMappings(): void {
+            this.showPage("MissingExpenseAccountMap");
+        }
+
+        goToStaff(): void {
+            this.showPage("MissingExpenseStaff");
+        }
+    }
+
+    const CLOSE_EXPMAP_EDITOR = "CLOSEEXPMAPEDITOR";
+    /**
+     * Missing Expense Account Mappings VM
+     */
+    export class MissingExpenseAccountMap extends BaseVM {
+        editor: KnockoutObservable<ExpAccountMapEditor>;
+        constructor() {
+            console.info("MissingExpenseAccountMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Missing Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseAccountMap[]>("api/Actions/MissingExpenseAccountMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.PracName,
+                        item.ChargeCode,
+                        item.ChargeName,
+                        item.ChargeExpAccount,
+                        item.NonChargeExpAccount,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "Expense Code" },
+                    { title: "Expense Name" },
+                    { title: "Chargeable Account" },
+                    { title: "Non-Chargeable Account" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ExpAccountMapEditor(item));
+            });
+            this.clearMessage();
+        }
+
+        goToExpenses(): void {
+            this.showPage("ExpensePost");
+        }
+    }
+
+    /**
+     * Class for Editing a Expense Account Mapping
+     */
+    class ExpAccountMapEditor extends BaseVM {
+        item: PE.Nominal.IMissingExpenseAccountMap;
+        chargeCode: KnockoutObservable<string>;
+        nonchargeCode: KnockoutObservable<string>;
+        chargeSuffix1: KnockoutObservable<number>;
+        chargeSuffix2: KnockoutObservable<number>;
+        chargeSuffix3: KnockoutObservable<number>;
+        nonChargeSuffix1: KnockoutObservable<number>;
+        nonChargeSuffix2: KnockoutObservable<number>;
+        nonChargeSuffix3: KnockoutObservable<number>;
+        constructor(item: PE.Nominal.IMissingExpenseAccountMap) {
+            super(false);
+            this.item = item;
+            this.chargeCode = ko.observable(item.ChargeExpAccount);
+            this.nonchargeCode = ko.observable(item.NonChargeExpAccount);
+            this.chargeSuffix1 = ko.observable(item.ChargeSuffix1);
+            this.chargeSuffix2 = ko.observable(item.ChargeSuffix2);
+            this.chargeSuffix3 = ko.observable(item.ChargeSuffix3);
+            this.nonChargeSuffix1 = ko.observable(item.NonChargeSuffix1);
+            this.nonChargeSuffix2 = ko.observable(item.NonChargeSuffix2);
+            this.nonChargeSuffix3 = ko.observable(item.NonChargeSuffix3);
+            this.init();
+        }
+
+        async init(): Promise<void> {
+            this.showMessage("Loading GL Information...");
+            this.clearMessage();
+            this.isReady(true);
+        }
+
+        async saveMapping(): Promise<void> {
+            this.showMessage("Saving Mapping Details...");
+            let toSave: PE.Nominal.IMissingExpenseAccountMap = this.item;
+            toSave.ChargeExpAccount = this.chargeCode();
+            toSave.ChargeSuffix1 = this.chargeSuffix1();
+            toSave.ChargeSuffix2 = this.chargeSuffix2();
+            toSave.ChargeSuffix3 = this.chargeSuffix3();
+            toSave.NonChargeExpAccount = this.nonchargeCode();
+            toSave.NonChargeSuffix1 = this.nonChargeSuffix1();
+            toSave.NonChargeSuffix2 = this.nonChargeSuffix2();
+            toSave.NonChargeSuffix3 = this.nonChargeSuffix3();
+            await this.ajaxSendOnly("api/Actions/UpdateExpenseAccountMapping", toSave);
+            this.clearMessage();
+            ko.postbox.publish(CLOSE_EXPMAP_EDITOR, {});
+        }
+    }
+    /**
+  * Missing Expense Staff VM
+  */
+    export class MissingExpenseStaff extends BaseVM {
+        constructor() {
+            console.info("MissingExpenseStaff");
+            super();
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Missing Staff Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseStaff[]>("api/Actions/MissingExpenseStaff");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.StaffIndex,
+                        item.StaffCode,
+                        item.StaffName,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Staff ID" },
+                    { title: "Staff Reference" },
+                    { title: "Staff Name" },
+                    { name: "item", visible: false }
+                ]
+            });
+            this.clearMessage();
+        }
+
+        goToExpenses(): void {
+            this.showPage("ExpensePost");
+        }
+    }
+    /**
+     * Missing Expense Account Mappings VM
+     */
+    export class ExpMap extends BaseVM {
+        editor: KnockoutObservable<ExpAccountMapEditor>;
+        constructor() {
+            console.info("ExpMap");
+            super();
+            this.editor = ko.observable(null);
+            this.toDispose.push(ko.postbox.subscribe(CLOSE_EXPMAP_EDITOR, () => {
+                // Close the Editor
+                this.editor(null);
+                // Refresh the Data
+                this.init(true);
+            }));
+            this.init();
+        }
+
+        async init(refresh: boolean = false): Promise<void> {
+            this.showMessage("Loading Expense Code Mapping Details...");
+            let data = await this.ajaxGet<PE.Nominal.IMissingExpenseAccountMap[]>("api/Actions/ExpenseAccountMap");
+            if (refresh) {
+                // Wipe out existing
+                $("#gltable").DataTable().destroy();
+                $("#gltable").empty();
+            }
+            let table = $("#gltable").DataTable({
+                select: {
+                    style: "single",
+                    info: false
+                },
+                data: data.map(function (item) {
+                    return [
+                        item.PracName,
+                        item.ChargeCode,
+                        item.ChargeName,
+                        item.ChargeExpAccount,
+                        item.NonChargeExpAccount,
+                        item
+                    ];
+                }),
+                columns: [
+                    { title: "Organisation" },
+                    { title: "Expense Code" },
+                    { title: "Expense Name" },
+                    { title: "Chargeable Account" },
+                    { title: "Non-Chargeable Account" },
+                    { name: "item", visible: false }
+                ]
+            });
+            (<DataTables.SelectApi><any>table).on("select.dt", (e: JQueryEventObject, dt: DataTables.Api, type: string, indexes: Array<any>) => {
+                // On Row Select
+                let arrData = <Array<any>>table.row(indexes).data();
+                let item = arrData[arrData.length - 1];
+                this.editor(new ExpAccountMapEditor(item));
+            });
+            this.clearMessage();
         }
     }
 }

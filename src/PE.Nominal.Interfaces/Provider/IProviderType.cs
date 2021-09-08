@@ -59,5 +59,24 @@ namespace PE.Nominal.Provider
         /// <param name="lines"></param>
         /// <returns></returns>
         Task<IEnumerable<int>> PostMTDCmd(int Org, IEnumerable<MTDClient> clients, IEnumerable<MTDInvoice> invoices, PerformContext performContext);
+
+        /// <summary>
+        /// Posts Expense Bits into the G/L
+        /// Assumes the Batch posted if no exception is thrown
+        /// </summary>
+        /// <param name="Org"></param>
+        /// <param name="lines"></param>
+        /// <returns></returns>
+        Task PostExpenseCmd(int Org, IEnumerable<ExpenseExtract> lines, PerformContext performContext);
+
+        /// <summary>
+        /// Posts Expense Bits into the G/L
+        /// Assumes the Batch posted if no exception is thrown
+        /// </summary>
+        /// <param name="Org"></param>
+        /// <param name="lines"></param>
+        /// <returns></returns>
+        Task ImportDisbursementsCmd(int Org, PerformContext performContext, int StaffId);
+
     }
 }

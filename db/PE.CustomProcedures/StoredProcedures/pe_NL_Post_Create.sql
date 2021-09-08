@@ -28,6 +28,10 @@ DELETE
 FROM tblTranNominalPost
 WHERE NomPosted = 0
 
+DELETE
+FROM tblTranNominalPostExpenses
+WHERE Posted = 0
+
 UPDATE tblTranNominal
 SET NomIndex = 0
 WHERE NomIndex = 1
@@ -44,8 +48,6 @@ FROM tblTranNominalControl
 -- These are standard SP's that create the Postable Nominal Ledger in tblTranNominalPost
 EXEC pe_NL_Post_Create_WIP @WIPOffice, @WIPServ, @WIPPart, @WIPDept, @WIPDetail, @Period
 
-EXEC pe_NL_Post_Create_EXP @WIPOffice, @WIPServ, @WIPPart, @WIPDept, @WIPDetail, @Period
-
 EXEC pe_NL_Post_Create_DRS @DRSOffice, @DRSServ, @DRSPart, @DRSDept, @DRSDetail, @Period
 
 EXEC pe_NL_Post_Create_DRS_Fees @DRSOffice, @DRSServ, @DRSPart, @DRSDept, @DRSDetail, @Period
@@ -57,6 +59,8 @@ IF @Cashbook = 0
 
 IF @InterCo = 1
 	EXEC pe_NL_Post_Create_Int @WIPOffice, @WIPServ, @WIPPart, @WIPDept, @WIPDetail, @Period
+	
+EXEC pe_NL_Post_Create_EXP @Period
 
 -- Some Standardization / Cleanup
 UPDATE tblTranNominalPost

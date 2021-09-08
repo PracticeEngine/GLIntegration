@@ -261,6 +261,7 @@ namespace PE.Nominal.Web.Controllers
 
         #endregion Methods for MissingMap (Missing Mappings)
 
+        #region Methods for Export Account Mappings
         [HttpGet]
         [Route("NLMap")]
         public async Task<IActionResult> NLMap()
@@ -292,6 +293,41 @@ namespace PE.Nominal.Web.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        #endregion
+
+        #region Methods for Import Account Mappings
+        [HttpGet]
+        [Route("NLImportMap")]
+        public async Task<IActionResult> NLImportMap()
+        {
+            try
+            {
+                var data = await _actionService.NLImportMappingsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateImportMapping")]
+        public async Task<IActionResult> UpdateImportMapping([FromBody]ImportMapUpdate mapping)
+        {
+            try
+            {
+                await _actionService.SaveImportMappingCmd(mapping.DisbMapIndex, mapping.DisbCode);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
 
         #region Methods for Journal (Journal Posting)
 
@@ -391,6 +427,79 @@ namespace PE.Nominal.Web.Controllers
                 catch (ResultException re)
                 {
                     context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n",re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organization {org.PracName} failed to transfer due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("TransferExpenses")]
+        public IActionResult TransferExpenses()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunTransferExpenses(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+
+        }
+
+        public async Task RunTransferExpenses(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    try
+                    {
+                        context.WriteLine($"Extracting Expenses for organization {org.PracName}.");
+                        var lines = await _actionService.TransferExpenseQuery(org.PracID, HangfireJobId: hangfireJobId);
+
+                        context.WriteLine($"Found {lines.Count()} lines for {org.PracName}.");
+                        if (lines == null || lines.Count() == 0)
+                            continue;
+
+                        // Cheat to deal with SQL not working off next batch, expecting 0
+                        if (_options.ProviderType.Equals("sql", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (var line in lines)
+                            {
+                                line.NomBatch = 0;
+                            }
+                        }
+                        context.WriteLine($"Preparing to send Post for organization {org.PracName}.");
+                        await _glProvider.PostExpenseCmd(org.PracID, lines, context);
+                        context.WriteLine($"Sent Post for organization {org.PracName}, flagging records now.");
+                        await _actionService.FlagExpensesTransferredCmd(org.PracID, hangfireJobId);
+                    }
+                    catch (Exception ex)
+                    {
+                        context.WriteLine($"Post Failed for organization {org.PracName}, unflagging records now.");
+                        await _actionService.UnFlagExpensesTransferredCmd(org.PracID, hangfireJobId);
+                        throw ex;
+                    }
+                    
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"Intacct Errors during transfer of organization {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
                 }
                 catch (AggregateException ax)
                 {
@@ -536,6 +645,43 @@ namespace PE.Nominal.Web.Controllers
         }
 
         #endregion Methods for Journal (Journal Posting)
+
+        #region Methods for Integration Details
+
+        [HttpGet]
+        [Route("DetailGroups/{PeriodIndex}")]
+        public async Task<IActionResult> DetailGroups(int PeriodIndex)
+        {
+            try
+            {
+                var data = await _actionService.DetailGroupsQuery(PeriodIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("DetailList")]
+        public async Task<IActionResult> DetailList([FromBody]DetailGroup group)
+        {
+            try
+            {
+                var data = await _actionService.DetailListQuery(group.NLOrg, group.NLSource, group.NLSection, group.NLAccount, group.NLOffice, group.NLService, group.NLPartner, group.NLDept, group.NLPeriodIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        #endregion
 
         #region Methods for BankRec (Bank Reconciliation)
 
@@ -936,5 +1082,184 @@ namespace PE.Nominal.Web.Controllers
         }
 
         #endregion Making Tax Digital
+
+        #region Expense Posting
+
+        [HttpGet]
+        [Route("ExpenseStaff")]
+        public async Task<IActionResult> ExpenseStaff()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseStaffQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("ExpenseLines")]
+        public async Task<IActionResult> ExpenseList([FromBody]ExpenseStaff staff)
+        {
+            try
+            {
+                var data = await _actionService.ExpenseLinesQuery(staff.StaffOrg, staff.StaffIndex);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet]
+        [Route("MissingExpenseAccountMap")]
+        public async Task<IActionResult> MissingExpenseAccountMap()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseMissingAccountsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateExpenseAccountMapping")]
+        public async Task<IActionResult> UpdateExpenseAccountMapping([FromBody]MissingExpenseAccountMap mapping)
+        {
+            try
+            {
+                await _actionService.UpdateExpenseAccountMappingCmd(mapping);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("MissingExpenseStaff")]
+        public async Task<IActionResult> MissingExpenseStaff()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseMissingStaffQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet]
+        [Route("ExpenseAccountMap")]
+        public async Task<IActionResult> ExpenseAccountMap()
+        {
+            try
+            {
+                var data = await _actionService.ExpenseAccountsQuery();
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        #endregion
+
+        #region Methods for Update Costing
+        [HttpPost]
+        [Route("CostingUpdate")]
+        public async Task<IActionResult> CostingUpdate()
+        {
+            try
+            {
+                await _actionService.CostingUpdateCmd();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        #endregion
+
+
+        #region Methods for Disbursement Import
+        [HttpPost]
+        [Route("DisbImport")]
+        public IActionResult DisbImport()
+        {
+            try
+            {
+                BackgroundJob.Enqueue(() => RunDisbImport(null));
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        public async Task RunDisbImport(PerformContext context)
+        {
+            var orgList = await _actionService.OrgListQuery();
+            var toTransfer = orgList.Where(o => o.NLTransfer);
+            var hangfireJobId = context.BackgroundJob.Id;
+            List<string> errors = new List<string>();
+
+            foreach (var org in toTransfer)
+            {
+                try
+                {
+                    try
+                    {
+                        context.WriteLine($"Preparing to Import Disbursements for organisation {org.PracName}.");
+                        await _glProvider.ImportDisbursementsCmd(org.PracID, context, 0);
+                        context.WriteLine($"Finished Importing Disbursements for organisation {org.PracName}.");
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                }
+                catch (ResultException re)
+                {
+                    context.WriteLine($"Import Disbursements - Errors during transfer of organisation {org.PracName}:\n\t{String.Join("\r\n", re.Errors)}");
+                }
+                catch (AggregateException ax)
+                {
+                    var msgs = String.Join("\n\t", ax.InnerExceptions.Select(e => e.Message));
+                    context.WriteLine($"The organisation {org.PracName} failed to import due to:\n\t{msgs}");
+                }
+                catch (Exception ex)
+                {
+                    context.WriteLine($"The organisation {org.PracName} failed to import due to {ex.Message}\n\n" + ex.StackTrace);
+                }
+            }
+        }
+        #endregion
     }
 }

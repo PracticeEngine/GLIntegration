@@ -1,7 +1,9 @@
 ﻿CREATE PROCEDURE [dbo].[pe_NL_Cashbook_Worked]
 
 @NomOrg int,
-@type varchar(3) = NULL
+@type varchar(3) = NULL,
+@HangfireJobID nvarchar(255)
+
 
 AS
 

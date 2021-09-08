@@ -27,7 +27,7 @@ IF @Server <> ''
 
 SET @SQL = @SQL + @DB + '.dbo.GL00102 Type ON Mast.ACCATNUM = Type.ACCATNUM
 WHERE CAST(Mast.ACCATNUM as nvarchar(10)) = ''' + LTrim(Str(@Type)) + '''
-ORDER BY AccDesc'
+ORDER BY AccountCode'
 
 PRINT @SQL
 

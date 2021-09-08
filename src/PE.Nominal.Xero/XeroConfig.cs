@@ -31,11 +31,8 @@ namespace PE.Nominal.XeroGL
         /// Post as Draft
         /// </summary>
         public bool? PostAsDraft { get; set; }
-
         public string OAuthClientId { get; set; }
-
         public string OAuthClientSecret { get; set; }
-
         public string OAuthRedirectURI { get; set; }
         public string OAuthAccessToken { get; set; }
         public string OAuthRefreshToken { get; set; }

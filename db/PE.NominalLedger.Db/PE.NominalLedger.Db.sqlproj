@@ -195,6 +195,24 @@
     <Build Include="Stored Procedures\MTD\pe_NL_MTD_Export_Invoice_Lines.sql" />
     <Build Include="Tables\tblTranNominalMTDControl.sql" />
     <Build Include="Stored Procedures\MTD\pe_NL_MTD_Mark_As_Processed.sql" />
+    <Build Include="Stored Procedures\pe_NL_EXP.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Suppliers_AD.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Suppliers.sql" />
+    <Build Include="Stored Procedures\SQLProviders\AccessDynamics\pe_NL_Expense_Post_AD.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Staff.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Lines.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Missing_Expense_Staff.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Missing_Expense_Accounts.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Account_Update.sql" />
+    <Build Include="Tables\tblTranNominalExpMap.sql" />
+    <Build Include="Stored Procedures\SQLProviders\pe_NL_Expense_Post.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expenses_Transfer.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expenses_Transfer_Failed.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expenses_Transfer_Worked.sql" />
+    <Build Include="Tables\tblTranNominalDeptMap.sql" />
+    <Build Include="Tables\tblTranNominalSubDeptMap.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Expense_Accounts.sql" />
+    <Build Include="Stored Procedures\Nominal\pe_NL_Cashbook_Failed.sql" />
   </ItemGroup>
   <ItemGroup>
     <ArtifactReference Include="..\PracticeEngine.Database.Tables.dacpac">

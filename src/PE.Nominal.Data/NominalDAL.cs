@@ -115,6 +115,17 @@ namespace PE.Nominal
 
         }
 
+        public async Task ExtractExpensesCmd()
+        {
+            var result = new SqlParameter("@Result", System.Data.SqlDbType.Int)
+            {
+                Direction = System.Data.ParameterDirection.Output
+            };
+
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_EXP @Result", result).ConfigureAwait(false);
+
+        }
+
         public async Task<IEnumerable<PostPeriods>> PostPeriodsQuery()
         {
             var results = await context.Database.SqlQueryAsync<PostPeriods>("pe_NL_Post_Periods").ConfigureAwait(false);
@@ -124,6 +135,11 @@ namespace PE.Nominal
         public async Task PostCreateCmd(int PeriodIndex)
         {
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Post_Create {0}", PeriodIndex).ConfigureAwait(false);
+        }
+
+        public async Task CostingUpdateCmd()
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Costing_Update").ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<MissingMap>> MissingMappingsQuery()
@@ -148,6 +164,29 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<MissingMap>("pe_NL_Mapping_List").ConfigureAwait(false);
             return results;
         }
+        public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<ImportMap>("pe_NL_DisbMap_Details").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task SaveImportMappingCmd(int MapIndex, string AccountCode)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_DisbMap_Line_Update {0}, {1}", MapIndex, AccountCode).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailGroup>> DetailGroupsQuery(int PeriodIndex)
+        {
+            var results = await context.Database.SqlQueryAsync<DetailGroup>("pe_NL_Detail_Groups {0}", PeriodIndex).ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<DetailLine>> DetailListQuery(int NLOrg, string NLSource, string NLSection, string NLAccount, string NLOffice, string NLService, int? NLPartner, string NLDept, int PeriodIndex)
+        {
+            var results = await context.Database.SqlQueryAsync<DetailLine>("pe_NL_Detail_Lines {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}", NLOrg, NLSource, NLSection, NLAccount, NLOffice, NLService, NLPartner, NLDept, PeriodIndex).ConfigureAwait(false);
+            return results;
+        }
+
         public async Task<IEnumerable<JournalGroup>> JournalGroupsQuery() 
         {
             var results = await context.Database.SqlQueryAsync<JournalGroup>("pe_NL_Journal_Groups").ConfigureAwait(false);
@@ -224,6 +263,22 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Journal_Transfer_Failed {0}, {1}, {2}", Org, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<ExpenseExtract>> TransferExpenseQuery(int Org, int BatchID = 0, string HangfireJobId = null)
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseExtract>("pe_NL_Expenses_Transfer {0}, {1}, {2}", Org, BatchID, HangfireJobId).ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task FlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expenses_Transfer_Worked {0}, {1}", Org, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expenses_Transfer_Failed {0}, {1}", Org, HangfireJobId).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<JournalRepostBatch>> JournalRepostListQuery(int NomPeriodIndex)
         {
             var results = await context.Database.SqlQueryAsync<JournalRepostBatch>("pe_NL_Journal_Repost_List {0}", NomPeriodIndex).ConfigureAwait(false);
@@ -268,6 +323,38 @@ namespace PE.Nominal
             var results = await context.Database.SqlQueryAsync<CashbookRepostBatch>("pe_NL_Cashbook_List {0}", NomPeriodIndex).ConfigureAwait(false);
             return results;
         }
-        
+
+        public async Task<IEnumerable<ExpenseStaff>> ExpenseStaffQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseStaff>("pe_NL_Expense_Staff").ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<ExpenseLines>> ExpenseLinesQuery(int ExpOrg, int ExpStaff)
+        {
+            var results = await context.Database.SqlQueryAsync<ExpenseLines>("pe_NL_Expense_Lines {0}, {1}", ExpOrg, ExpStaff).ConfigureAwait(false);
+            return results;
+        }
+
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseMissingAccountsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseAccountMap>("pe_NL_Missing_Expense_Accounts").ConfigureAwait(false);
+            return results;
+        }
+        public async Task<IEnumerable<MissingExpenseStaff>> ExpenseMissingStaffQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseStaff>("pe_NL_Missing_Expense_Staff").ConfigureAwait(false);
+            return results;
+        }
+        public async Task UpdateExpenseAccountMappingCmd(int ExpOrg, string ChargeCode, string ChargeExpAccount, string NonChargeExpAccount, int ChargeSuffix1, int ChargeSuffix2, int ChargeSuffix3, int NonChargeSuffix1, int NonChargeSuffix2, int NonChargeSuffix3)
+        {
+            await context.Database.ExecuteSqlCommandAsync("pe_NL_Expense_Account_Update {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}", ExpOrg, ChargeCode, ChargeExpAccount, NonChargeExpAccount, ChargeSuffix1, ChargeSuffix2, ChargeSuffix3, NonChargeSuffix1, NonChargeSuffix2, NonChargeSuffix3).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseAccountsQuery()
+        {
+            var results = await context.Database.SqlQueryAsync<MissingExpenseAccountMap>("pe_NL_Expense_Accounts").ConfigureAwait(false);
+            return results;
+        }
     }
 }

@@ -25,6 +25,9 @@
                         <a href="#" data-bind="visible:mapping,click:showPage.bind($data,'MissingMap')" class="list-group-item">Missing Mappings</a>
                         <a href="#" data-bind="visible:posting,click:showPage.bind($data,'Journal')" class="list-group-item">Journal Posting</a>
                         <a href="#" data-bind="visible:bankrec,click:showPage.bind($data,'BankRec')" class="list-group-item">Update Bank Rec</a>
+                        <a href="#" data-bind="visible:expense,click:showPage.bind($data,'ExpensePost')" class="list-group-item">Expense Posting</a>
+                        <a href="#" data-bind="visible:disbimp,click:showPage.bind($data,'NLImport')" class="list-group-item">Create Disbursements</a>
+                        <a href="#" data-bind="visible:costing,click:showPage.bind($data,'CostingUpdate')" class="list-group-item">Update Costing</a>
                         <a href="#" data-bind="visible:mtd,click:showPage.bind($data,'MTD')" class="list-group-item">Making Tax Digital</a>
                     </div>
                 </div>
@@ -332,7 +335,7 @@
         <div class="col-md-12">
             <div class="panel panel-primary panel-headroom">
                 <div class="panel-heading">
-                    Repost Journal
+                    Repost Bank Reconcilliation
                 </div>
                 <div class="panel-body">
                     <form class="form-horizontal">
@@ -684,6 +687,64 @@
     <!-- ko template:'nested-Map-Editor'-->
     <!-- /ko -->
 </template>
+<template id="nested-ImportMap-Editor">
+    <div class="modal fade" tabindex="-1" role="dialog" data-bind="bsmodal:editor">
+        <div class="modal-dialog" role="document" data-bind="if:editor">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Mapping</h4>
+                </div>
+                <div class="modal-body" data-bind="with:editor">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Organisation</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.OrgName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Account</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.NLAcc"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Disbursement Code</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="options:disbCodes,value:selectedDisb,optionsValue:'ChargeCode',optionsText:'ChargeName',optionsCaption:' -- Please Select -- '"></select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" data-bind="with:editor">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bind="click:saveMapping">Save Mapping</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</template>
+<template id="body-DisbMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Import Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ImportMap-Editor'-->
+    <!-- /ko -->
+</template>
 <template id="body-MTD">
     <div class="row">
         <div class="col-md-offset-3 col-md-6">
@@ -714,6 +775,372 @@
                             }
                         }
                     }
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-ExpensePost">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Expense Posting
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
+                                <div>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="visible:hasMissingStaff, click:goToStaff">Missing Staff Data</button>
+                    <button class="btn btn-default" data-bind="visible:hasMissingAccounts, click:goToMappings">Missing Account Data</button>
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-primary" data-bind="enable:noMissingData, click:transfer">Transfer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="nested-ExpenseAccountMap-Editor">
+    <div class="modal fade" tabindex="-1" role="dialog" data-bind="bsmodal:editor">
+        <div class="modal-dialog" role="document" data-bind="if:editor">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Mapping</h4>
+                </div>
+                <div class="modal-body" data-bind="with:editor">
+                    <form class="form-horizontal">
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Expense Code</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.ChargeCode"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Expense Name</label>
+                            <div class="col-md-8">
+                                <span class="form-control-static disabled" data-bind="text:item.ChargeName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <input class="form-control" data-bind="value: chargeCode" />
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 1</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:chargeSuffix1">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 2</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:chargeSuffix2">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Chargeable Expense Account Suffix 3</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:chargeSuffix3">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <input class="form-control" data-bind="value: nonchargeCode" />
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 1</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix1">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 2</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix2">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-sm">
+                            <label class="col-md-4 control-label">Non-Chargeable Expense Account Suffix 3</label>
+                            <div class="col-md-8" data-bind="if:isReady">
+                                <select class="form-control" data-bind="value:nonChargeSuffix3">
+                                    <option value="0">Not Required</option>
+                                    <option value="1">Partner</option>
+                                    <option value="2">Department</option>
+                                    <option value="3">Sub-Department</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" data-bind="with:editor">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bind="click:saveMapping">Save Mapping</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</template>
+<template id="body-MissingExpenseAccountMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Missing Expense Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goToExpenses">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ExpenseAccountMap-Editor'-->
+    <!-- /ko -->
+</template>
+<template id="body-MissingExpenseStaff">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Missing Expense Staff
+                </div>
+                <div style="text-align:center">
+                    <h2>No Account can be found for these Staff in the G/L system.</h2>
+                    <p>Once an account has been created or amended run Create Journal to pick up new data.</p>
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goToExpenses">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-ExpMap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Expense Account Mappings
+                </div>
+                <div class="panel-body" data-bind="if:isReady">
+                    <table id="gltable" class="table table-bordered table-condensed"></table>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ko template:'nested-ExpenseAccountMap-Editor'-->
+    <!-- /ko -->
+</template>
+<template id="body-ReprintJournal">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Reprint Journal
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to reprint.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-CostingUpdate">
+    <div class="row">
+        <div class="col-md-offset-3 col-md-6">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Update Costing Data
+                </div>
+                <div class="panel-body">
+                    <strong>Current Period</strong>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            Start: <strong data-bind="text:startDate"></strong>
+                        </div>
+                        <div class="col-sm-6">
+                            End: <strong data-bind="text:endDate"></strong>
+                        </div>
+                    </div>
+                    <p>The update will put a copy of all Clients Services and Jobs into Dimensions Costing System.</p>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Cancel</button>
+                    <button class="btn btn-primary" data-bind="click:run">Update Costing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-ReprintJournalDetails">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Reprint Journal Details
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Start</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:startDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">End</label>
+                            <div class="col-md-8">
+                                <strong class="form-control-static disabled" data-bind="text:endDate"></strong>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select Organisation</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Orgs,value:SelectedOrg,optionsCaption:'Select an Organisation...', optionsText:'PracName'"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select Source</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="value:SelectedSource,optionsCaption:'Select a Source...'">
+                                    <option value="DRS">Debtors and Sales</option>
+                                    <option value="INT">Inter-Company</option>
+                                    <option value="LOD">Banking</option>
+                                    <option value="WIP">Work In Progress</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p data-bind="visible:SelectedPeriod">Select a Batch that you want to reprint.</p>
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<template id="body-Integrationdetails">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary panel-headroom">
+                <div class="panel-heading">
+                    Integration Details
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Select period</label>
+                            <div class="col-md-8">
+                                <select class="form-control" data-bind="options:Periods,value:SelectedPeriod,optionsCaption:'Select a Period...', optionsText:'PeriodDescription'"></select>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div style="overflow-y:scroll;overflow-x:auto; border:solid 1px #333;height:300px;">
+                                <div>
+                                    <ul class="list-unstyled" data-bind="template:{foreach:children,name:'body-Journal-Node'}"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <table id="gltable" class="table table-bordered table-condensed"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer text-right">
+                    <button class="btn btn-default" data-bind="click:goHome">Close</button>
+                    <button class="btn btn-info" data-bind="click:report">Report</button>
                 </div>
             </div>
         </div>

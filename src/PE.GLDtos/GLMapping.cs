@@ -46,5 +46,30 @@ namespace PE.Nominal
         public string MapSource { get; set; }
 
         public string StaffName { get; set; }
+
+        /// <summary>
+        /// The Organiztion Name
+        /// </summary>
+        public string OrgName { get; set; }
+
+        /// <summary>
+        /// The Service Name
+        /// </summary>
+        public string ServiceName { get; set; }
+
+        /// <summary>
+        /// The Office Name
+        /// </summary>
+        public string OfficeName { get; set; }
+
+        /// <summary>
+        /// The Partner Name
+        /// </summary>
+        public string PartnerName { get; set; }
+
+        /// <summary>
+        /// The Department Name
+        /// </summary>
+        public string DepartmentName { get; set; }
     }
 }

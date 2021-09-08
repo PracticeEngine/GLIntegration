@@ -77,6 +77,8 @@ namespace PE.Nominal
             hangfireContext.WriteLine("Starting pe_NL_LOD Stored Procedure");
             await nominalDAL.ExtractLodgementsCmd().ConfigureAwait(false);
 
+            hangfireContext.WriteLine("Starting pe_NL_EXP Stored Procedure");
+            await nominalDAL.ExtractExpensesCmd().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<PostPeriods>> PostPeriodsQuery()
@@ -87,6 +89,11 @@ namespace PE.Nominal
         public async Task PostCreateCmd(int PeriodIndex)
         {
             await nominalDAL.PostCreateCmd(PeriodIndex).ConfigureAwait(false);
+        }
+
+        public async Task CostingUpdateCmd()
+        {
+            await nominalDAL.CostingUpdateCmd().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<MissingMap>> MissingMappingsQuery()
@@ -108,6 +115,27 @@ namespace PE.Nominal
         {
             return await nominalDAL.NLMappingsQuery().ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()
+        {
+            return await nominalDAL.NLImportMappingsQuery().ConfigureAwait(false);
+        }
+
+        public async Task SaveImportMappingCmd(int MapIndex, string AccountCode)
+        {
+            await nominalDAL.SaveImportMappingCmd(MapIndex, AccountCode).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailGroup>> DetailGroupsQuery(int PeriodIndex)
+        {
+            return await nominalDAL.DetailGroupsQuery(PeriodIndex).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<DetailLine>> DetailListQuery(int NLOrg, string NLSource, string NLSection, string NLAccount, string NLOffice, string NLService, int? NLPartner, string NLDept, int PeriodIndex)
+        {
+            return await nominalDAL.DetailListQuery(NLOrg, NLSource, NLSection, NLAccount, NLOffice, NLService, NLPartner, NLDept, PeriodIndex).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<JournalGroup>> JournalGroupsQuery() 
         {
             return await nominalDAL.JournalGroupsQuery().ConfigureAwait(false);
@@ -121,6 +149,11 @@ namespace PE.Nominal
         public async Task<IEnumerable<JournalExtract>> TransferJournalQuery(int Org, int BatchID = 0, string Journal = null, string HangfireJobId = null)
         {
             return await nominalDAL.TransferJournalQuery(Org, BatchID, Journal, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<ExpenseExtract>> TransferExpenseQuery(int Org, int BatchID = 0, string HangfireJobId = null)
+        {
+            return await nominalDAL.TransferExpenseQuery(Org, BatchID, HangfireJobId).ConfigureAwait(false);
         }
 
         public async Task<List<dynamic>> ExportJournalQuery(int BatchID = 0)
@@ -143,6 +176,15 @@ namespace PE.Nominal
             await nominalDAL.UnFlagTransferredCmd(Org, Journal, HangfireJobId).ConfigureAwait(false);
         }
 
+        public async Task FlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await nominalDAL.FlagExpensesTransferredCmd(Org, HangfireJobId).ConfigureAwait(false);
+        }
+
+        public async Task UnFlagExpensesTransferredCmd(int Org, string HangfireJobId = null)
+        {
+            await nominalDAL.UnFlagExpensesTransferredCmd(Org, HangfireJobId).ConfigureAwait(false);
+        }
         public async Task<IEnumerable<JournalRepostBatch>> JournalRepostListQuery(int NomPeriodIndex)
         {
             return await nominalDAL.JournalRepostListQuery(NomPeriodIndex).ConfigureAwait(false);
@@ -196,6 +238,34 @@ namespace PE.Nominal
         public async Task<IEnumerable<IntacctEmployee>> IntacctEmployeesQuery()
         {
             return await intacctDAL.IntacctEmployeesQuery().ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<ExpenseStaff>> ExpenseStaffQuery()
+        {
+            return await nominalDAL.ExpenseStaffQuery().ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<ExpenseLines>> ExpenseLinesQuery(int ExpOrg, int ExpStaff)
+        {
+            return await nominalDAL.ExpenseLinesQuery(ExpOrg, ExpStaff).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseMissingAccountsQuery()
+        {
+            return await nominalDAL.ExpenseMissingAccountsQuery().ConfigureAwait(false);
+        }
+        public async Task<IEnumerable<MissingExpenseStaff>> ExpenseMissingStaffQuery()
+        {
+            return await nominalDAL.ExpenseMissingStaffQuery().ConfigureAwait(false);
+        }
+
+        public async Task UpdateExpenseAccountMappingCmd(MissingExpenseAccountMap item)
+        {
+            await nominalDAL.UpdateExpenseAccountMappingCmd(item.ExpOrg, item.ChargeCode, item.ChargeExpAccount, item.NonChargeExpAccount, item.ChargeSuffix1, item.ChargeSuffix2, item.ChargeSuffix3, item.NonChargeSuffix1, item.NonChargeSuffix2, item.NonChargeSuffix3).ConfigureAwait(false);
+        }
+        public async Task<IEnumerable<MissingExpenseAccountMap>> ExpenseAccountsQuery()
+        {
+            return await nominalDAL.ExpenseAccountsQuery().ConfigureAwait(false);
         }
     }
 }
