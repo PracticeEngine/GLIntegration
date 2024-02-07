@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34407.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB97480B-243E-4672-BC31-CC43075F48ED}"
 	ProjectSection(SolutionItems) = preProject
@@ -42,7 +42,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PE.Nominal.Fake", "src\PE.N
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "PE.CustomProcedures", "db\PE.CustomProcedures\PE.CustomProcedures.sqlproj", "{109C31AD-145F-40BC-9C9F-6D1649F35D02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PE.Nominal.Xero", "src\PE.Nominal.Xero\PE.Nominal.Xero.csproj", "{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PE.Nominal.Xero", "src\PE.Nominal.Xero\PE.Nominal.Xero.csproj", "{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PE.Nominal.BusCent", "src\PE.Nominal.BusCent\PE.Nominal.BusCent.csproj", "{11487F20-6107-4B52-B8F4-CD8DB00CEBC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +104,10 @@ Global
 		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11487F20-6107-4B52-B8F4-CD8DB00CEBC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11487F20-6107-4B52-B8F4-CD8DB00CEBC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11487F20-6107-4B52-B8F4-CD8DB00CEBC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11487F20-6107-4B52-B8F4-CD8DB00CEBC1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +124,7 @@ Global
 		{AE007E71-1B9D-460B-B8EC-C5048BB1D5B1} = {0FCF8A22-2456-404A-8D68-AA5113DB6F56}
 		{109C31AD-145F-40BC-9C9F-6D1649F35D02} = {2669A00B-ED59-4DEF-A180-A5E2E63231AA}
 		{F6F8FFC1-F8E5-45C9-96E1-701EE2377361} = {0FCF8A22-2456-404A-8D68-AA5113DB6F56}
+		{11487F20-6107-4B52-B8F4-CD8DB00CEBC1} = {0FCF8A22-2456-404A-8D68-AA5113DB6F56}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F395B620-175D-43AA-9AD1-AF8B937790E8}

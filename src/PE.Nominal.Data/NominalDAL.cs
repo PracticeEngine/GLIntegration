@@ -159,9 +159,9 @@ namespace PE.Nominal
             await context.Database.ExecuteSqlCommandAsync("pe_NL_Map_Line_Update {0}, {1}, {2}", MapIndex, AccountCode, AccountTypeCode).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<MissingMap>> NLMappingsQuery()
+        public async Task<IEnumerable<GLMapping>> NLMappingsQuery()
         {
-            var results = await context.Database.SqlQueryAsync<MissingMap>("pe_NL_Mapping_List").ConfigureAwait(false);
+            var results = await context.Database.SqlQueryAsync<GLMapping>("pe_NL_Mapping_List").ConfigureAwait(false);
             return results;
         }
         public async Task<IEnumerable<ImportMap>> NLImportMappingsQuery()

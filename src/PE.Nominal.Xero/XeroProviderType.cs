@@ -456,27 +456,53 @@ namespace PE.Nominal.XeroGL
 
             while (moreContacts)
             {
-                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+                try
                 {
-                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
-                    startTime = DateTime.Now;
-                    apiCalls = 0;
+                    if (apiCalls > 50)
+                    {
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
+                        startTime = DateTime.Now;
+                        apiCalls = 0;
+                    }
+                    var pagedContacts = await AccountingApi.GetContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, page: currentContactPage++, order: "Name");
+
+                    performContext.WriteLine(ConsoleTextColor.White, $"Received page {currentContactPage} of Xero Contacts.");
+                    if (pagedContacts._Contacts.Count() > 0)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Last Contact Received is {pagedContacts._Contacts.Last().Name}.");
+                    }
+                    else
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Page {currentContactPage} is empty.");
+                    }
+                    apiCalls++;
+
+                    if (pagedContacts != null && pagedContacts._Contacts.Count() > 0)
+                    {
+                        xeroContacts._Contacts.AddRange(pagedContacts._Contacts);
+                    }
+                    else
+                    {
+                        moreContacts = false;
+                    }
                 }
-                var pagedContacts = await AccountingApi.GetContactsAsync(_config.OAuthAccessToken, orgConfig.OAuthTenantId, page: currentContactPage++);
-                apiCalls++;
-                //var pagedContacts = await xeroClient.Contacts.Page(currentContactPage++).FindAsync();
-                if (pagedContacts != null && pagedContacts._Contacts.Count() > 0)
+                catch (Exception ex)
                 {
-                    xeroContacts._Contacts.AddRange(pagedContacts._Contacts);
-                }
-                else
-                {
+                    performContext.WriteLine(ConsoleTextColor.White, $"Error: {ex.Message}, Stack Trace: {ex.StackTrace}");
                     moreContacts = false;
                 }
             }
 
             performContext.WriteLine(ConsoleTextColor.White, $"Received list of {xeroContacts._Contacts.Count()} Xero Contacts.");
-
+            
             var newContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts(); 
             newContacts._Contacts = new List<Contact>();
             var updatedContacts = new Xero.NetStandard.OAuth2.Model.Accounting.Contacts();
@@ -546,9 +572,18 @@ namespace PE.Nominal.XeroGL
                     {
                         await RefreshAccessToken();
                     }
-                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                    if (apiCalls > 50)
                     {
-                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
                         startTime = DateTime.Now;
                         apiCalls = 0;
                     }
@@ -580,9 +615,18 @@ namespace PE.Nominal.XeroGL
                     {
                         await RefreshAccessToken();
                     }
-                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                    if (apiCalls > 50)
                     {
-                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
                         startTime = DateTime.Now;
                         apiCalls = 0;
                     }
@@ -619,9 +663,18 @@ namespace PE.Nominal.XeroGL
                 {
                     await RefreshAccessToken();
                 }
-                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                if (apiCalls > 50)
                 {
-                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                    if (elapsedSeconds < 60)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                        int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                        Thread.Sleep(sleepTime);
+                    }
                     startTime = DateTime.Now;
                     apiCalls = 0;
                 }
@@ -660,9 +713,18 @@ namespace PE.Nominal.XeroGL
                 {
                     await RefreshAccessToken();
                 }
-                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                if (apiCalls > 50)
                 {
-                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                    if (elapsedSeconds < 60)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                        int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                        Thread.Sleep(sleepTime);
+                    }
                     startTime = DateTime.Now;
                     apiCalls = 0;
                 }
@@ -693,9 +755,18 @@ namespace PE.Nominal.XeroGL
                     {
                         await RefreshAccessToken();
                     }
-                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                    if (apiCalls > 50)
                     {
-                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
                         startTime = DateTime.Now;
                         apiCalls = 0;
                     }
@@ -846,9 +917,18 @@ namespace PE.Nominal.XeroGL
                     {
                         await RefreshAccessToken();
                     }
-                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                    if (apiCalls > 50)
                     {
-                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
                         startTime = DateTime.Now;
                         apiCalls = 0;
                     }
@@ -881,9 +961,18 @@ namespace PE.Nominal.XeroGL
                     {
                         await RefreshAccessToken();
                     }
-                    if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                    if (apiCalls > 50)
                     {
-                        Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                        var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                        if (elapsedSeconds < 60)
+                        {
+                            performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                            int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                            performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                            Thread.Sleep(sleepTime);
+                        }
                         startTime = DateTime.Now;
                         apiCalls = 0;
                     }
@@ -922,9 +1011,18 @@ namespace PE.Nominal.XeroGL
                 {
                     await RefreshAccessToken();
                 }
-                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                if (apiCalls > 50)
                 {
-                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                    if (elapsedSeconds < 60)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                        int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                        Thread.Sleep(sleepTime);
+                    }
                     startTime = DateTime.Now;
                     apiCalls = 0;
                 }
@@ -959,9 +1057,18 @@ namespace PE.Nominal.XeroGL
                 {
                     await RefreshAccessToken();
                 }
-                if (apiCalls > 50 && DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+
+                if (apiCalls > 50)
                 {
-                    Thread.Sleep(Int32.Parse(DateTime.Now.Subtract(startTime).TotalSeconds.ToString()) * 1000);
+                    var elapsedSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+                    performContext.WriteLine(ConsoleTextColor.White, $"Made 50 API calls in {elapsedSeconds}.");
+                    if (elapsedSeconds < 60)
+                    {
+                        performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before continuing.");
+                        int sleepTime = Convert.ToInt32(60 - elapsedSeconds) * 1000;
+                        performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                        Thread.Sleep(sleepTime);
+                    }
                     startTime = DateTime.Now;
                     apiCalls = 0;
                 }

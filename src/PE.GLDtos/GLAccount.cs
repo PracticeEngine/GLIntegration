@@ -8,6 +8,8 @@ namespace PE.Nominal
 {
     public class GLAccount
     {
+        public string AccountId { get; set; }
+
         public string AccountDesc { get; set; }
 
         public string AccountCode { get; set; }

@@ -88,6 +88,9 @@ namespace PE.Nominal.Web
                 case "xero":
                     services.AddXeroGLProvider(Configuration);
                     break;
+                case "buscent":
+                    services.AddBusCentGLProvider(Configuration);
+                    break;
                 default:
                     services.AddSqlGLProvider(Configuration);
                     break;

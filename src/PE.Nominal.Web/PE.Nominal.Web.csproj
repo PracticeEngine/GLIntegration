@@ -35,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PE.Nominal.BusCent\PE.Nominal.BusCent.csproj" />
     <ProjectReference Include="..\PE.Nominal.Data\PE.Nominal.Data.csproj" />
     <ProjectReference Include="..\PE.Nominal.Fake\PE.Nominal.Fake.csproj" />
     <ProjectReference Include="..\PE.Nominal.Intacct\PE.Nominal.Intacct.csproj" />

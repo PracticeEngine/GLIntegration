@@ -76,5 +76,20 @@ namespace PE.Nominal
         public string owner_name { get; set; }
 
         public string service_type { get; set; }
+
+        public string Dimension1Code { get; set; }
+        public string Dimension1Value { get; set; }
+
+        public string Dimension2Code { get; set; }
+        public string Dimension2Value { get; set; }
+
+        public string Dimension3Code { get; set; }
+        public string Dimension3Value { get; set; }
+
+        public string Dimension4Code { get; set; }
+        public string Dimension4Value { get; set; }
+
+        public string Dimension5Code { get; set; }
+        public string Dimension5Value { get; set; }
     }
 }
