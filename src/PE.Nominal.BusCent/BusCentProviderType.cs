@@ -48,7 +48,7 @@ namespace PE.Nominal.BusCent
             var orgConfig = GetOrgConfig(Org);
             var client = await GetClient(Org);
 
-            var companiesResponse = await client.GetAsync("/v2.0/Production/api/v2.0/companies");
+            var companiesResponse = await client.GetAsync("companies");
             string companyContent = await companiesResponse.Content.ReadAsStringAsync();
             BusCentCompanies companies = JsonConvert.DeserializeObject<BusCentCompanies>(companyContent);
             var company = companies.value.Where(c => c.displayName.Trim() == orgConfig.CompanyName.Trim()).FirstOrDefault();
@@ -58,7 +58,7 @@ namespace PE.Nominal.BusCent
             }
             else
             {
-                var accountsResponse = await client.GetAsync($"/v2.0/Production/api/v2.0/companies({company.id})/accounts");
+                var accountsResponse = await client.GetAsync($"companies({company.id})/accounts");
                 string accountContent = await accountsResponse.Content.ReadAsStringAsync();
                 BusCentAccounts accounts = JsonConvert.DeserializeObject<BusCentAccounts>(accountContent);
 
@@ -162,7 +162,7 @@ namespace PE.Nominal.BusCent
 
         public async Task<IEnumerable<BusCentCompany>> CompaniesQuery(HttpClient client)
         {
-            var companiesResponse = await client.GetAsync("/v2.0/Production/api/v2.0/companies");
+            var companiesResponse = await client.GetAsync("companies");
             string companyContent = await companiesResponse.Content.ReadAsStringAsync();
             BusCentCompanies companies = JsonConvert.DeserializeObject<BusCentCompanies>(companyContent);
             return companies.value;
@@ -170,7 +170,7 @@ namespace PE.Nominal.BusCent
 
         public async Task<IEnumerable<BCJournal>> JournalQuery(HttpClient client, string companyId)
         {
-            var journalResponse = await client.GetAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journals");
+            var journalResponse = await client.GetAsync($"companies({companyId})/journals");
             string journalContent = await journalResponse.Content.ReadAsStringAsync();
             BusCentJournal journals = JsonConvert.DeserializeObject<BusCentJournal>(journalContent);
             return journals.value;
@@ -178,7 +178,7 @@ namespace PE.Nominal.BusCent
 
         public async Task<IEnumerable<BCJournalLine>> JournalLineQuery(HttpClient client, string companyId, string journalId)
         {
-            var journalResponse = await client.GetAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journals({journalId})/journalLines");
+            var journalResponse = await client.GetAsync($"companies({companyId})/journals({journalId})/journalLines");
             string journalContent = await journalResponse.Content.ReadAsStringAsync();
             BusCentJournalLines journals = JsonConvert.DeserializeObject<BusCentJournalLines>(journalContent);
             return journals.value;
@@ -186,7 +186,7 @@ namespace PE.Nominal.BusCent
 
         public async Task<IEnumerable<BCDimension>> DimensionQuery(HttpClient client, string companyId)
         {
-            var dimResponse = await client.GetAsync($"/v2.0/Production/api/v2.0/companies({companyId})/dimensions");
+            var dimResponse = await client.GetAsync($"companies({companyId})/dimensions");
             string dimContent = await dimResponse.Content.ReadAsStringAsync();
             BusCentDimensions dims = JsonConvert.DeserializeObject<BusCentDimensions>(dimContent);
             return dims.value;
@@ -194,7 +194,7 @@ namespace PE.Nominal.BusCent
 
         public async Task<IEnumerable<BCDimensionValue>> DimensionValueQuery(HttpClient client, string companyId)
         {
-            var dimResponse = await client.GetAsync($"/v2.0/Production/api/v2.0/companies({companyId})/dimensionValues");
+            var dimResponse = await client.GetAsync($"companies({companyId})/dimensionValues");
             string dimContent = await dimResponse.Content.ReadAsStringAsync();
             BusCentDimensionValues dims = JsonConvert.DeserializeObject<BusCentDimensionValues>(dimContent);
             return dims.value;
@@ -203,7 +203,7 @@ namespace PE.Nominal.BusCent
         public async Task<BCJournal> CreateJournalQuery(HttpClient client, string companyId)
         {
             string createJournalBody = "{\"code\": \"PE\", \"displayName\": \"Practice Engine Journal\"}";
-            var createJournalResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journals", new StringContent(createJournalBody, Encoding.UTF8, "application/json"));
+            var createJournalResponse = await client.PostAsync($"companies({companyId})/journals", new StringContent(createJournalBody, Encoding.UTF8, "application/json"));
             string createJournalContent = await createJournalResponse.Content.ReadAsStringAsync();
             var newJournal = JsonConvert.DeserializeObject<BCJournal>(createJournalContent);
             return newJournal;
@@ -214,8 +214,8 @@ namespace PE.Nominal.BusCent
             string lineid = Guid.NewGuid().ToString();
             var account = accounts.Where(a => a.AccountCode == item.AccountCode).FirstOrDefault();
 
-            string createJournalLineBody = "{\"id\": \"" + lineid + "\", \"journalId\": \"" + journalId + "\", \"lineNumber\": " + lineNumber.ToString() + ", \"accountType\": \"G/L Account\", \"accountId\": \"" + account.AccountId + "\", \"accountNumber\": \"" + account.AccountCode + "\", \"postingDate\": \"" + item.NomDate.ToString("yyyy-MM-dd") + "\", \"amount\": " + item.NomAmount.ToString() + ", \"documentNumber\": \"" + documentNum + "\", \"externalDocumentNumber\": \"\", \"description\": \"" + item.NomNarrative + "\", \"comment\": \"" + item.NomTransRef + "\" }";
-            var createJournalLineResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journals({journalId})/journalLines", new StringContent(createJournalLineBody, Encoding.UTF8, "application/json"));
+            string createJournalLineBody = "{\"id\": \"" + lineid + "\", \"journalId\": \"" + journalId + "\", \"lineNumber\": " + lineNumber.ToString() + ", \"accountType\": \"G/L Account\", \"accountId\": \"" + account.AccountId + "\", \"accountNumber\": \"" + account.AccountCode + "\", \"postingDate\": \"" + item.NomDate.ToString("yyyy-MM-dd") + "\", \"amount\": " + item.NomAmount.ToString() + ", \"documentNumber\": \"" + documentNum + "\", \"externalDocumentNumber\": \"\", \"description\": \"" + item.NomNarrative + "\", \"comment\": \"" + item.NomTransRef + "\", \"taxCode\": \"" + item.BCTaxProdGroup + "\" }";
+            var createJournalLineResponse = await client.PostAsync($"companies({companyId})/journals({journalId})/journalLines", new StringContent(createJournalLineBody, Encoding.UTF8, "application/json"));
             string createJournalLineContent = await createJournalLineResponse.Content.ReadAsStringAsync();
             var newLine = JsonConvert.DeserializeObject<BCJournalLine>(createJournalLineContent);
             return newLine;
@@ -228,11 +228,11 @@ namespace PE.Nominal.BusCent
                 var dim = dimensions.Where(d => d.code == item.Dimension1Code).FirstOrDefault();
                 if (dim != null)
                 {
-                    var dimv = dimensionValues.Where(d => d.dimensionId == dim.id && d.code == item.Dimension1Value).FirstOrDefault();
+                    var dimv = dimensionValues.Where(d => d.code == item.Dimension1Value).FirstOrDefault();
                     if (dimv != null)
                     {
                         string createDimBody = "{\"code\": \"" + dim.code + "\", \"valueCode\": \"" + dimv.code + "\" }";
-                        var createDimResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
+                        var createDimResponse = await client.PostAsync($"companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
                     }
                 }
             }
@@ -242,11 +242,11 @@ namespace PE.Nominal.BusCent
                 var dim = dimensions.Where(d => d.code == item.Dimension2Code).FirstOrDefault();
                 if (dim != null)
                 {
-                    var dimv = dimensionValues.Where(d => d.dimensionId == dim.id && d.code == item.Dimension2Value).FirstOrDefault();
+                    var dimv = dimensionValues.Where(d => d.code == item.Dimension2Value).FirstOrDefault();
                     if (dimv != null)
                     {
                         string createDimBody = "{\"code\": \"" + dim.code + "\", \"valueCode\": \"" + dimv.code + "\" }";
-                        var createDimResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
+                        var createDimResponse = await client.PostAsync($"companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
                     }
                 }
             }
@@ -256,11 +256,11 @@ namespace PE.Nominal.BusCent
                 var dim = dimensions.Where(d => d.code == item.Dimension3Code).FirstOrDefault();
                 if (dim != null)
                 {
-                    var dimv = dimensionValues.Where(d => d.dimensionId == dim.id && d.code == item.Dimension3Value).FirstOrDefault();
+                    var dimv = dimensionValues.Where(d => d.code == item.Dimension3Value).FirstOrDefault();
                     if (dimv != null)
                     {
                         string createDimBody = "{\"code\": \"" + dim.code + "\", \"valueCode\": \"" + dimv.code + "\" }";
-                        var createDimResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
+                        var createDimResponse = await client.PostAsync($"companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
                     }
                 }
             }
@@ -270,11 +270,11 @@ namespace PE.Nominal.BusCent
                 var dim = dimensions.Where(d => d.code == item.Dimension4Code).FirstOrDefault();
                 if (dim != null)
                 {
-                    var dimv = dimensionValues.Where(d => d.dimensionId == dim.id && d.code == item.Dimension4Value).FirstOrDefault();
+                    var dimv = dimensionValues.Where(d => d.code == item.Dimension4Value).FirstOrDefault();
                     if (dimv != null)
                     {
                         string createDimBody = "{\"code\": \"" + dim.code + "\", \"valueCode\": \"" + dimv.code + "\" }";
-                        var createDimResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
+                        var createDimResponse = await client.PostAsync($"companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
                     }
                 }
             }
@@ -284,11 +284,11 @@ namespace PE.Nominal.BusCent
                 var dim = dimensions.Where(d => d.code == item.Dimension5Code).FirstOrDefault();
                 if (dim != null)
                 {
-                    var dimv = dimensionValues.Where(d => d.dimensionId == dim.id && d.code == item.Dimension5Value).FirstOrDefault();
+                    var dimv = dimensionValues.Where(d => d.code == item.Dimension5Value).FirstOrDefault();
                     if (dimv != null)
                     {
                         string createDimBody = "{\"code\": \"" + dim.code + "\", \"valueCode\": \"" + dimv.code + "\" }";
-                        var createDimResponse = await client.PostAsync($"/v2.0/Production/api/v2.0/companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
+                        var createDimResponse = await client.PostAsync($"companies({companyId})/journalLines({line.id})/dimensionSetLines", new StringContent(createDimBody, Encoding.UTF8, "application/json"));
                     }
                 }
             }
@@ -356,7 +356,102 @@ namespace PE.Nominal.BusCent
             else
             {
                 documentNum = "PE" + lines.First().NomBatch.ToString();
-            }    
+            }
+
+            foreach (var accCode in lines.Select(l => l.AccountCode).Distinct())
+            {
+                var account = accounts.Where(a => a.AccountCode == accCode).FirstOrDefault();
+                if (account == null || account.AccountCode != accCode)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have account {accCode} required for this transfer.");
+                }
+            }
+
+            foreach (var dim1 in lines.Where(l => !string.IsNullOrEmpty(l.Dimension1Code) && !string.IsNullOrEmpty(l.Dimension1Value)).Select(l => new KeyValuePair<string, string>(l.Dimension1Code, l.Dimension1Value)).Distinct())
+            {
+                var dim = dimensions.Where(a => a.code == dim1.Key).FirstOrDefault();
+                if (dim == null || dim.code != dim1.Key)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have a 1st dimension code of {dim1.Key} required for this transfer.");
+                }
+                else
+                {
+                    var dimv = dimensionValues.Where(d => d.code == dim1.Value).FirstOrDefault();
+                    if (dimv == null || dimv.code != dim1.Value)
+                    {
+                        throw new Exception($"Company {orgConfig.CompanyName} does not have a dimension value of {dim1.Value} in dimension {dim1.Key} required for this transfer.");
+                    }
+                }
+            }
+
+
+            foreach (var dim2 in lines.Where(l => !string.IsNullOrEmpty(l.Dimension2Code) && !string.IsNullOrEmpty(l.Dimension2Value)).Select(l => new KeyValuePair<string, string>(l.Dimension2Code, l.Dimension2Value)).Distinct())
+            {
+                var dim = dimensions.Where(a => a.code == dim2.Key).FirstOrDefault();
+                if (dim == null || dim.code != dim2.Key)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have a 2nd dimension code of {dim2.Key} required for this transfer.");
+                }
+                else
+                {
+                    var dimv = dimensionValues.Where(d => d.code == dim2.Value).FirstOrDefault();
+                    if (dimv == null || dimv.code != dim2.Value)
+                    {
+                        throw new Exception($"Company {orgConfig.CompanyName} does not have a dimension value of {dim2.Value} in dimension {dim2.Key} required for this transfer.");
+                    }
+                }
+            }
+
+            foreach (var dim3 in lines.Where(l => !string.IsNullOrEmpty(l.Dimension3Code) && !string.IsNullOrEmpty(l.Dimension3Value)).Select(l => new KeyValuePair<string, string>(l.Dimension3Code, l.Dimension3Value)).Distinct())
+            {
+                var dim = dimensions.Where(a => a.code == dim3.Key).FirstOrDefault();
+                if (dim == null || dim.code != dim3.Key)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have a 3st dimension code of {dim3.Key} required for this transfer.");
+                }
+                else
+                {
+                    var dimv = dimensionValues.Where(d => d.code == dim3.Value).FirstOrDefault();
+                    if (dimv == null || dimv.code != dim3.Value)
+                    {
+                        throw new Exception($"Company {orgConfig.CompanyName} does not have a dimension value of {dim3.Value} in dimension {dim3.Key} required for this transfer.");
+                    }
+                }
+            }
+
+            foreach (var dim4 in lines.Where(l => !string.IsNullOrEmpty(l.Dimension4Code) && !string.IsNullOrEmpty(l.Dimension4Value)).Select(l => new KeyValuePair<string, string>(l.Dimension4Code, l.Dimension4Value)).Distinct())
+            {
+                var dim = dimensions.Where(a => a.code == dim4.Key).FirstOrDefault();
+                if (dim == null || dim.code != dim4.Key)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have a 4st dimension code of {dim4.Key} required for this transfer.");
+                }
+                else
+                {
+                    var dimv = dimensionValues.Where(d => d.code == dim4.Value).FirstOrDefault();
+                    if (dimv == null || dimv.code != dim4.Value)
+                    {
+                        throw new Exception($"Company {orgConfig.CompanyName} does not have a dimension value of {dim4.Value} in dimension {dim4.Key} required for this transfer.");
+                    }
+                }
+            }
+
+            foreach (var dim5 in lines.Where(l => !string.IsNullOrEmpty(l.Dimension5Code) && !string.IsNullOrEmpty(l.Dimension5Value)).Select(l => new KeyValuePair<string, string>(l.Dimension5Code, l.Dimension5Value)).Distinct())
+            {
+                var dim = dimensions.Where(a => a.code == dim5.Key).FirstOrDefault();
+                if (dim == null || dim.code != dim5.Key)
+                {
+                    throw new Exception($"Company {orgConfig.CompanyName} does not have a 5st dimension code of {dim5.Key} required for this transfer.");
+                }
+                else
+                {
+                    var dimv = dimensionValues.Where(d => d.code == dim5.Value).FirstOrDefault();
+                    if (dimv == null || dimv.code != dim5.Value)
+                    {
+                        throw new Exception($"Company {orgConfig.CompanyName} does not have a dimension value of {dim5.Value} in dimension {dim5.Key} required for this transfer.");
+                    }
+                }
+            }
 
             foreach (var item in lines)
             {

@@ -30,6 +30,12 @@ namespace PE.Nominal
         /// </summary>
         public decimal NomAmount { get; set; }
 
+
+        /// <summary>
+        /// Amount of the Nominal Account (for the GL)
+        /// </summary>
+        public decimal NomVATAmount { get; set; }
+
         /// <summary>
         /// The Date and Time of the Nominal Entry (for the GL)
         /// </summary>
@@ -91,5 +97,8 @@ namespace PE.Nominal
 
         public string Dimension5Code { get; set; }
         public string Dimension5Value { get; set; }
+
+        public string BCTaxBusGroup { get; set; }
+        public string BCTaxProdGroup { get; set; }
     }
 }

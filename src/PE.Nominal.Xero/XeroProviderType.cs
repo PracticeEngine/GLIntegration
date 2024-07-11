@@ -1089,6 +1089,15 @@ namespace PE.Nominal.XeroGL
                 }
             }
 
+            var finalSeconds = DateTime.Now.Subtract(startTime).TotalSeconds;
+            if (finalSeconds < 60)
+            {
+                performContext.WriteLine(ConsoleTextColor.White, $"Need to wait before finishing the current Org.");
+                int sleepTime = Convert.ToInt32(60 - finalSeconds) * 1000;
+                performContext.WriteLine(ConsoleTextColor.White, $"Sleeping thread for {sleepTime} milliseconds.");
+                Thread.Sleep(sleepTime);
+            }
+
             return processedInvoices;
         }
 

@@ -14,7 +14,7 @@ namespace PE.Nominal.BusCent
     {
         public string id { get; set; }
         public string systemVersion { get; set; }
-        public int timestamp { get; set; }
+        //public long timestamp { get; set; }
         public string name { get; set; }
         public string displayName { get; set; }
         public string businessProfileId { get; set; }
